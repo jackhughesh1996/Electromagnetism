@@ -1,0 +1,6 @@
+{
+  "name": "Year 8 Electromagnet & Electric Motor 3D Lab",
+  "description": "Interactive 3D science simulations for Year 8 students: explore electromagnets, magnetic fields, the motor effect, and DC electric motor operation with 3D force vectors and split-ring commutators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

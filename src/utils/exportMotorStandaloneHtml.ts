@@ -1,0 +1,1476 @@
+export function generateMotorStandaloneHtml(): string {
+  // Return the complete standalone L4 electric motor HTML
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Year 8 Science: Lesson 4 — 3D Electric Motor Explorer (Standalone)</title>
+  <meta name="description" content="Complete standalone 3D interactive physics simulation of a DC electric motor for Year 8 students: investigate permanent and coil magnetic fields, 3D force vectors, split-ring commutator action, and variables affecting torque." />
+  <style>
+    :root {
+      --bg-dark: #020617;
+      --panel-bg: rgba(15, 23, 42, 0.94);
+      --panel-border: rgba(51, 65, 85, 0.7);
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; width: 100vw; display: flex; flex-direction: column; }
+    
+    header {
+      height: 52px; background: rgba(15, 23, 42, 0.98); border-bottom: 1px solid #1e293b;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+      z-index: 20; shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon { width: 32px; height: 32px; background: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .brand-title { font-size: 0.95rem; font-weight: 700; color: #fff; line-height: 1.2; }
+    .brand-badge { font-size: 0.65rem; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 6px; border-radius: 6px; font-weight: 600; margin-left: 6px; }
+    
+    .nav-tabs { display: flex; gap: 4px; background: #090d16; padding: 3px; border-radius: 10px; border: 1px solid #1e293b; }
+    .nav-tab {
+      background: transparent; color: var(--text-muted); border: none; padding: 6px 12px;
+      font-size: 0.78rem; font-weight: 600; border-radius: 7px; cursor: pointer; transition: all 0.15s ease;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-tab:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+    .nav-tab.active { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4); }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-action {
+      background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 10px;
+      font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-action:hover { background: #334155; color: #fff; }
+
+    #main-container { flex: 1; position: relative; width: 100%; height: calc(100vh - 52px); overflow: hidden; }
+    #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+
+    .overlay-panel {
+      position: absolute; z-index: 10;
+      background: var(--panel-bg); backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border); border-radius: 14px;
+      box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+    }
+
+    #left-panel {
+      top: 14px; left: 14px; width: 370px; max-height: calc(100vh - 80px);
+      overflow-y: auto; padding: 16px;
+    }
+
+    .tab-view {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(2, 6, 23, 0.96); backdrop-filter: blur(8px);
+      z-index: 15; overflow-y: auto; padding: 24px; display: none;
+    }
+    .tab-view.active-view { display: block; }
+    .tab-content-container { max-width: 920px; margin: 0 auto; padding-bottom: 40px; }
+
+    h2.panel-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+    p.panel-desc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.35; }
+    
+    .section-title {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #94a3b8; margin: 12px 0 6px 0; border-bottom: 1px solid #1e293b; padding-bottom: 3px;
+    }
+
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+
+    button.btn-opt {
+      background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
+      padding: 7px 9px; border-radius: 8px; font-size: 0.74rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s ease; text-align: center;
+    }
+    button.btn-opt:hover { background: #334155; color: #fff; }
+    button.btn-opt.active { background: #2563eb; color: #fff; border-color: #38bdf8; }
+    button.btn-switch-active { background: #059669; color: #fff; border-color: #10b981; }
+
+    .control-row { margin-bottom: 10px; }
+    .control-label { display: flex; justify-content: space-between; font-size: 0.74rem; color: #cbd5e1; margin-bottom: 4px; }
+    .control-value { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); font-weight: 700; }
+    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.75rem; color: #cbd5e1; }
+    .switch-toggle {
+      position: relative; display: inline-block; width: 34px; height: 18px;
+    }
+    .switch-toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155; transition: .2s; border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
+      background-color: white; transition: .2s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #2563eb; }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    .torque-meter-card {
+      background: rgba(9, 13, 22, 0.9); border: 1px solid #1e293b; border-radius: 10px;
+      padding: 12px; margin-top: 12px;
+    }
+    .meter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.75rem; font-weight: 700; }
+    .meter-track { width: 100%; height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; position: relative; }
+    .meter-fill { height: 100%; width: 45%; background: linear-gradient(90deg, #38bdf8, #10b981); transition: width 0.2s ease; }
+
+    #commutator-flash {
+      position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 10;
+      background: rgba(15, 23, 42, 0.92); border: 1px solid #38bdf8; border-radius: 20px;
+      padding: 6px 16px; font-size: 0.78rem; font-weight: 700; color: #38bdf8;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.35); display: flex; align-items: center; gap: 8px;
+      opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
+    }
+    #commutator-flash.active { opacity: 1; }
+
+    #hud-status {
+      position: absolute; bottom: 16px; left: 16px; z-index: 10;
+      background: var(--panel-bg); backdrop-filter: blur(10px);
+      border: 1px solid var(--panel-border); border-radius: 12px;
+      padding: 12px 14px; width: 300px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .stat-row { display: flex; justify-content: space-between; font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+    .stat-row span:last-child { font-family: monospace; font-weight: bold; color: #f8fafc; }
+
+    #hud-camera {
+      position: absolute; bottom: 16px; right: 16px; z-index: 10;
+      background: var(--panel-bg); backdrop-filter: blur(10px);
+      border: 1px solid var(--panel-border); border-radius: 12px;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .cam-btn-group { display: flex; gap: 4px; }
+    .btn-cam {
+      background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
+      font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    }
+    .btn-cam:hover { background: #334155; color: #fff; }
+
+    .challenge-card {
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+      padding: 18px; margin-bottom: 16px; transition: border-color 0.2s ease;
+    }
+    .challenge-card:hover { border-color: #38bdf8; }
+    .challenge-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .challenge-step { font-size: 0.7rem; font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 6px; }
+    .challenge-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .challenge-body { font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; }
+    .action-box {
+      background: #020617; border-left: 3px solid #2563eb; padding: 10px 12px;
+      border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 0.8rem; color: #94a3b8;
+    }
+    .action-box strong { color: #f8fafc; }
+
+    .quiz-question { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .quiz-title { font-size: 0.92rem; font-weight: 700; color: #fff; margin-bottom: 10px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+    .quiz-option {
+      background: #1e293b; border: 1px solid #334155; padding: 8px 12px; border-radius: 8px;
+      color: #cbd5e1; font-size: 0.8rem; cursor: pointer; text-align: left; transition: all 0.15s ease;
+    }
+    .quiz-option:hover { background: #334155; color: #fff; }
+    .quiz-option.correct { background: #065f46; border-color: #10b981; color: #fff; }
+    .quiz-option.incorrect { background: #991b1b; border-color: #ef4444; color: #fff; }
+    .quiz-feedback { margin-top: 8px; font-size: 0.78rem; line-height: 1.4; display: none; }
+
+    table.data-table {
+      width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.8rem; text-align: left;
+    }
+    table.data-table th, table.data-table td {
+      border: 1px solid #334155; padding: 8px 12px;
+    }
+    table.data-table th { background: #1e293b; color: #38bdf8; font-weight: 700; }
+    table.data-table tr:nth-child(even) { background: rgba(30, 41, 59, 0.4); }
+
+    .symbol-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; border: 2px solid #38bdf8;
+      font-size: 0.8rem; font-weight: 900; color: #38bdf8; margin: 0 4px; vertical-align: middle;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🔄</div>
+      <div>
+        <div style="display: flex; align-items: center;">
+          <span class="brand-title">3D Electric Motor Explorer</span>
+          <span class="brand-badge">Lesson 4 • Year 8 KS3</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchView('lab')">
+        <span>🔬 3D Motor Lab</span>
+      </button>
+      <button class="nav-tab" onclick="switchView('practical')">
+        <span>📋 5 Challenges</span>
+      </button>
+      <button class="nav-tab" onclick="switchView('theory')">
+        <span>📖 Motor Effect Theory</span>
+      </button>
+      <button class="nav-tab" onclick="switchView('quiz')">
+        <span>❓ Motor Quiz</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <button class="btn-action" onclick="togglePlayPause()" id="btn-top-play">
+        ⏸ Pause
+      </button>
+      <button class="btn-action" onclick="toggleSwitch()" id="btn-top-switch">
+        ⚡ Switch: CLOSED
+      </button>
+      <button class="btn-action" onclick="reverseBattery()" title="Reverse current direction">
+        🔄 Polarity: Normal
+      </button>
+    </div>
+  </header>
+
+  <div id="commutator-flash">
+    <span>⚡ Current through the coil has reversed!</span>
+  </div>
+
+  <main id="main-container">
+    <div id="canvas-container"></div>
+
+    <div id="left-panel" class="overlay-panel">
+      <h2 class="panel-title">
+        <span>DC MOTOR CONTROLS</span>
+        <span style="font-size: 0.68rem; color: #38bdf8; font-weight: normal;">Interactive 3D</span>
+      </h2>
+      <p class="panel-desc">Observe how perpendicular magnetic fields and current produce opposite forces on the rectangular coil, creating continuous rotation with the split-ring commutator.</p>
+
+      <div class="section-title">1. MOTION & PLAYBACK</div>
+      <div class="btn-grid-3">
+        <button id="btn-play-toggle" class="btn-opt active" onclick="togglePlayPause()">
+          ⏸ Pause
+        </button>
+        <button id="btn-step-45" class="btn-opt" onclick="stepMotor(45)">
+          ⏭ Step 45°
+        </button>
+        <button id="btn-speed-toggle" class="btn-opt" onclick="toggleSpeed()">
+          ⏱ 1.0× Speed
+        </button>
+      </div>
+
+      <div class="section-title">2. COMMUTATOR MECHANISM</div>
+      <div class="toggle-row" style="background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;">
+        <div>
+          <span style="font-weight: 700; color: #fff;">Split-Ring Commutator</span><br/>
+          <span style="font-size: 0.68rem; color: #94a3b8;" id="label-comm-desc">Swaps connections every half-turn</span>
+        </div>
+        <label class="switch-toggle">
+          <input type="checkbox" id="check-commutator" checked onchange="toggleCommutator(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="section-title">3. MOTOR STRENGTH VARIABLES</div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>Electric Current (I)</span>
+          <span id="label-current" class="control-value">Medium (4.0 A)</span>
+        </div>
+        <div class="btn-grid-3">
+          <button id="btn-cur-low" class="btn-opt" onclick="setCurrentLevel('low')">Low (2A)</button>
+          <button id="btn-cur-med" class="btn-opt active" onclick="setCurrentLevel('med')">Med (4A)</button>
+          <button id="btn-cur-high" class="btn-opt" onclick="setCurrentLevel('high')">High (6A)</button>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>Coil Turns (N)</span>
+          <span id="label-turns" class="control-value">40 Turns</span>
+        </div>
+        <div class="btn-grid-3">
+          <button id="btn-turns-20" class="btn-opt" onclick="setTurns(20)">20</button>
+          <button id="btn-turns-40" class="btn-opt active" onclick="setTurns(40)">40</button>
+          <button id="btn-turns-60" class="btn-opt" onclick="setTurns(60)">60</button>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>Permanent Magnets (B)</span>
+          <span id="label-magnet" class="control-value">Standard / Normal</span>
+        </div>
+        <div class="btn-grid">
+          <button id="btn-mag-std" class="btn-opt active" onclick="setMagnetStrength('standard')">Standard Poles</button>
+          <button id="btn-mag-strong" class="btn-opt" onclick="setMagnetStrength('strong')">Strong Neodymium</button>
+        </div>
+        <div class="btn-grid-3" style="margin-top: 4px;">
+          <button id="btn-gap-narrow" class="btn-opt" onclick="setMagnetGap('narrow')">Narrow Gap</button>
+          <button id="btn-gap-normal" class="btn-opt active" onclick="setMagnetGap('normal')">Normal Gap</button>
+          <button id="btn-gap-wide" class="btn-opt" onclick="setMagnetGap('wide')">Wide Gap</button>
+        </div>
+      </div>
+
+      <div class="section-title">4. 3D VISUAL OVERLAYS</div>
+      <div class="toggle-row">
+        <span>3D Force Vectors (F on Long Sides)</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="check-force-arrows" checked onchange="toggleForceArrows(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>Permanent Magnetic Field (N ➔ S)</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="check-perm-field" checked onchange="togglePermanentField(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>Coil Electromagnet Field</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="check-coil-field" onchange="toggleCoilField(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>Conventional 2D Symbols (• and ×)</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="check-symbols" onchange="toggleSymbols(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>Flowing Electrons (e⁻)</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="check-particles" checked onchange="toggleParticles(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="torque-meter-card">
+        <div class="meter-header">
+          <span style="color: #cbd5e1;">RELATIVE TURNING EFFECT (TORQUE)</span>
+          <span id="label-torque-val" style="color: #38bdf8; font-family: monospace;">45%</span>
+        </div>
+        <div class="meter-track">
+          <div class="meter-fill" id="meter-torque-bar"></div>
+        </div>
+        <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 6px;">
+          Determined by: <strong>Force = N × I × L × B</strong>
+        </div>
+      </div>
+    </div>
+
+    <div id="hud-status">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 0.74rem; font-weight: 700; color: #f59e0b; display: flex; align-items: center; gap: 4px;">
+          📊 MOTOR KINEMATICS & FORCES
+        </span>
+        <span id="badge-rot-status" style="font-size: 0.65rem; background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 1px 5px; border-radius: 4px; font-weight: bold;">
+          Continuous Clockwise
+        </span>
+      </div>
+      <div class="stat-row">
+        <span>Coil Rotation Angle:</span>
+        <span id="stat-angle">0.0°</span>
+      </div>
+      <div class="stat-row">
+        <span>Left Side Force (F_left):</span>
+        <span id="stat-f-left" style="color: #38bdf8;">+0.75 N (UP)</span>
+      </div>
+      <div class="stat-row">
+        <span>Right Side Force (F_right):</span>
+        <span id="stat-f-right" style="color: #f43f5e;">−0.75 N (DOWN)</span>
+      </div>
+      <div class="stat-row">
+        <span>Commutator Status:</span>
+        <span id="stat-comm-status" style="color: #10b981;">Active Contact</span>
+      </div>
+    </div>
+
+    <div id="hud-camera">
+      <span style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Camera Viewpoints</span>
+      <div class="cam-btn-group">
+        <button class="btn-cam" onclick="setCameraView('perspective')">3D Angle</button>
+        <button class="btn-cam" onclick="setCameraView('front')">Axle Front</button>
+        <button class="btn-cam" onclick="setCameraView('top')">Top View</button>
+        <button class="btn-cam" onclick="setCameraView('commutator')">Commutator</button>
+      </div>
+    </div>
+
+    <div id="view-practical" class="tab-view">
+      <div class="tab-content-container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h1 style="font-size: 1.4rem; color: #fff; font-weight: 800;">📋 5-Step Guided Practical: Electric Motor Explorer</h1>
+            <p style="font-size: 0.85rem; color: #94a3b8;">Discover how interacting magnetic fields create sustained rotation in a DC motor.</p>
+          </div>
+          <button class="btn-action" onclick="switchView('lab')">← Return to 3D Motor</button>
+        </div>
+
+        <div class="challenge-card">
+          <div class="challenge-header">
+            <span class="challenge-step">CHALLENGE 1</span>
+            <span style="font-size: 0.75rem; color: #38bdf8;">Two Magnetic Fields</span>
+          </div>
+          <h2 class="challenge-title">1. Find the Two Magnetic Fields & The Single Wire Force</h2>
+          <div class="challenge-body">
+            Before a motor can turn, two distinct magnetic fields must interact:
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;">
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                <div style="color: #ef4444; font-weight: 700; margin-bottom: 4px;">1. Permanent Magnet Field</div>
+                <div style="font-size: 0.8rem; color: #cbd5e1;">Uniform translucent field lines running straight from the red North pole to the blue South pole across the motor gap.</div>
+              </div>
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                <div style="color: #38bdf8; font-weight: 700; margin-bottom: 4px;">2. Coil Electromagnet Field</div>
+                <div style="font-size: 0.8rem; color: #cbd5e1;">Formed by current looping through the coil turns, turning the rectangular coil itself into an electromagnet with its own North and South poles!</div>
+              </div>
+            </div>
+            <div class="action-box">
+              <strong>Core Rule:</strong> Current in a wire produces a magnetic field. When this wire is placed inside an existing external magnetic field, the two magnetic fields push against each other — this is the <strong>Motor Effect</strong>!
+            </div>
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <div class="challenge-header">
+            <span class="challenge-step">CHALLENGE 2</span>
+            <span style="font-size: 0.75rem; color: #f59e0b;">Forces in 3D</span>
+          </div>
+          <h2 class="challenge-title">2. Where Are the Forces? 3D Vectors & 2D Symbols</h2>
+          <div class="challenge-body">
+            Look closely at the rectangular coil:
+            <ul style="padding-left: 20px; margin: 8px 0; line-height: 1.6;">
+              <li>Electric current travels in <strong>opposite directions</strong> along the two long sides of the rectangular coil.</li>
+              <li>Because the magnetic field (N ➔ S) is the same for both sides, the resulting Lorentz force pushes the left side <strong>UP</strong> and the right side <strong>DOWN</strong>!</li>
+            </ul>
+            <div class="action-box">
+              <strong>Understanding Conventional 2D Diagrams:</strong><br/>
+              Many textbook diagrams use 2D symbols because paper cannot show depth:<br/>
+              • <span class="symbol-pill">•</span> = <strong>Point</strong> pointing directly TOWARDS you (like the tip of an approaching arrow).<br/>
+              • <span class="symbol-pill">×</span> = <strong>Cross</strong> pointing directly AWAY from you (like the fletching feathers of an arrow flying away).
+            </div>
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <div class="challenge-header">
+            <span class="challenge-step">CHALLENGE 3</span>
+            <span style="font-size: 0.75rem; color: #10b981;">Creating Rotation</span>
+          </div>
+          <h2 class="challenge-title">3. Make the Motor Turn: Force Pair ➔ Turning Effect (Torque)</h2>
+          <div class="challenge-body">
+            When one side of the coil is pushed up and the opposite side is pushed down at equal distances from the central axle, they form a <strong>couple</strong> (a pair of equal and opposite forces).
+            <p style="margin-top: 8px;">This pair creates a sustained <strong>turning effect</strong> (torque) that forces the axle to rotate. Using the <strong>Step 45°</strong> button or <strong>Slow Motion</strong>, you can inspect how the force vectors stay vertical while the coil rotates through 360°!</p>
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <div class="challenge-header">
+            <span class="challenge-step">CHALLENGE 4</span>
+            <span style="font-size: 0.75rem; color: #ef4444;">The Crucial Component</span>
+          </div>
+          <h2 class="challenge-title">4. The Commutator Challenge: What Happens Without It?</h2>
+          <div class="challenge-body">
+            Why does a DC motor need a <strong>split-ring commutator</strong>?
+            <div class="action-box">
+              <strong>Try it in the 3D Simulator:</strong><br/>
+              1. Uncheck <strong>Split-Ring Commutator</strong> in the left control panel.<br/>
+              2. Watch what happens: the coil rotates until it reaches the vertical alignment (90°), then slows down, reverses, and starts oscillating back and forth before coming to a complete stop!<br/>
+              3. Re-enable the split-ring commutator: the motor immediately resumes continuous full-circle rotation!
+            </div>
+            <p><strong>The Explanation:</strong> Every half-turn, the two sides of the coil swap positions. Without a commutator, the forces would now push backwards, pulling the coil back to vertical. The split-ring commutator switches the electrical connections every half-turn (180°), ensuring that whichever wire is on the left is always pushed UP, maintaining continuous rotation in one direction!</p>
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <div class="challenge-header">
+            <span class="challenge-step">CHALLENGE 5</span>
+            <span style="font-size: 0.75rem; color: #ec4899;">Speed & Strength</span>
+          </div>
+          <h2 class="challenge-title">5. Reverse and Strengthen the Motor</h2>
+          <div class="challenge-body">
+            How can an engineer make an electric car motor or drone motor more powerful?
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>How to Increase Strength</th>
+                  <th>Physical Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Current (I)</strong></td>
+                  <td>Increase voltage / Low ➔ High (6A)</td>
+                  <td>More charge carriers passing per second increases magnetic interaction</td>
+                </tr>
+                <tr>
+                  <td><strong>Turns of Wire (N)</strong></td>
+                  <td>Wind more loops (20 ➔ 40 ➔ 60 turns)</td>
+                  <td>Each loop feels its own force; total force is the sum of all loops!</td>
+                </tr>
+                <tr>
+                  <td><strong>Magnetic Field (B)</strong></td>
+                  <td>Stronger magnets & narrower gap</td>
+                  <td>Denser magnetic flux lines produce greater Lorentz force</td>
+                </tr>
+                <tr>
+                  <td><strong>Battery Direction</strong></td>
+                  <td>Reverse battery terminals (+ / −)</td>
+                  <td>Reverses current direction ➔ reverses force arrows ➔ reverses rotation!</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-theory" class="tab-view">
+      <div class="tab-content-container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h1 style="font-size: 1.4rem; color: #fff; font-weight: 800;">📖 Year 8 KS3 Science: Electric Motor Theory</h1>
+            <p style="font-size: 0.85rem; color: #94a3b8;">Fleming’s Left-Hand Rule, the Motor Effect, and real-world DC motors.</p>
+          </div>
+          <button class="btn-action" onclick="switchView('lab')">← Return to 3D Motor</button>
+        </div>
+
+        <div class="challenge-card">
+          <h2 class="challenge-title">Fleming’s Left-Hand Rule</h2>
+          <div class="challenge-body">
+            <p>Fleming's Left-Hand Rule allows you to predict the direction of force on a current-carrying wire in a magnetic field:</p>
+            <div class="action-box">
+              Hold your <strong>left hand</strong> with thumb, first finger, and second finger all at right angles (90°) to each other:<br/><br/>
+              • <strong>Thumb:</strong> Direction of <strong>Motion / Force (F)</strong><br/>
+              • <strong>First Finger:</strong> Direction of <strong>Magnetic Field (B)</strong> (North to South)<br/>
+              • <strong>Second Finger:</strong> Direction of <strong>Current (I)</strong> (Positive to Negative)
+            </div>
+            <p><strong>Memory Trick:</strong> <strong>F</strong>ather (Thumb/Force), <strong>M</strong>other (First/Magnetic Field), <strong>C</strong>hild (Second/Current)!</p>
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <h2 class="challenge-title">The Motor Effect Formula: F = B × I × L</h2>
+          <div class="challenge-body">
+            <p>The magnitude of the force acting on the wire is directly proportional to three quantities:</p>
+            <div style="background: #1e293b; padding: 14px; border-radius: 8px; border: 1px solid #334155; margin: 10px 0; text-align: center; font-size: 1.1rem; font-weight: 700; color: #38bdf8;">
+              $$ F = B \times I \times L $$
+            </div>
+            <ul style="padding-left: 20px; line-height: 1.6;">
+              <li><strong>F:</strong> Force on the conductor (in Newtons, N)</li>
+              <li><strong>B:</strong> Magnetic flux density of the permanent magnets (in Tesla, T)</li>
+              <li><strong>I:</strong> Electric current flowing through the conductor (in Amperes, A)</li>
+              <li><strong>L:</strong> Length of wire inside the magnetic field (in meters, m)</li>
+              <li>For a coil with <strong>N turns</strong>: Total Force = $N \times B \times I \times L$.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <h2 class="challenge-title">Role of the Split-Ring Commutator and Carbon Brushes</h2>
+          <div class="challenge-body">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Description</th>
+                  <th>Key Function in DC Motor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Split-Ring Commutator</strong></td>
+                  <td>A brass cylinder split into two insulated semicircular halves mounted on the spinning axle.</td>
+                  <td>Swaps the electrical connections to the coil every half-turn (180°) so current continually produces torque in the same direction.</td>
+                </tr>
+                <tr>
+                  <td><strong>Carbon Brushes</strong></td>
+                  <td>Spring-loaded blocks of graphite that gently press against the spinning commutator ring.</td>
+                  <td>Provides smooth electrical contact from the stationary battery circuit to the rotating axle without tangling wires.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-quiz" class="tab-view">
+      <div class="tab-content-container">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h1 style="font-size: 1.4rem; color: #fff; font-weight: 800;">❓ Year 8 Electric Motor Quiz</h1>
+            <p style="font-size: 0.85rem; color: #94a3b8;">Test your understanding of the motor effect and DC motors!</p>
+          </div>
+          <button class="btn-action" onclick="switchView('lab')">← Return to 3D Motor</button>
+        </div>
+
+        <div class="quiz-question" id="mq1">
+          <div class="quiz-title">1. What causes the turning effect in an electric motor?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkMotorAnswer('mq1', 0, false)">A. Heat generated by the spinning axle</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq1', 1, true)">B. Opposite forces acting on the two long sides of the current-carrying coil</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq1', 2, false)">C. Static electricity repelling the plastic casing</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq1', 3, false)">D. Gravity pulling down one side of the battery</button>
+          </div>
+          <div class="quiz-feedback" id="mq1-fb"></div>
+        </div>
+
+        <div class="quiz-question" id="mq2">
+          <div class="quiz-title">2. In Fleming's Left-Hand Rule, what does the THUMB represent?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkMotorAnswer('mq2', 0, true)">A. The direction of Force / Motion (F)</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq2', 1, false)">B. The direction of Magnetic Field (B)</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq2', 2, false)">C. The direction of Electric Current (I)</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq2', 3, false)">D. The Temperature of the coil</button>
+          </div>
+          <div class="quiz-feedback" id="mq2-fb"></div>
+        </div>
+
+        <div class="quiz-question" id="mq3">
+          <div class="quiz-title">3. What is the essential purpose of the split-ring commutator?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkMotorAnswer('mq3', 0, false)">A. To cool down the copper coil during fast rotation</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq3', 1, false)">B. To turn alternating current (AC) into light</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq3', 2, true)">C. To reverse the current through the coil every half-turn so the motor keeps turning in the same direction</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq3', 3, false)">D. To prevent the battery from discharging</button>
+          </div>
+          <div class="quiz-feedback" id="mq3-fb"></div>
+        </div>
+
+        <div class="quiz-question" id="mq4">
+          <div class="quiz-title">4. What happens if the split-ring commutator is disabled or replaced with unbroken continuous rings?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkMotorAnswer('mq4', 0, false)">A. The motor spins twice as fast</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq4', 1, true)">B. The coil oscillates back and forth and stops at the vertical position</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq4', 2, false)">C. The battery explodes</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq4', 3, false)">D. The permanent magnets lose their magnetism</button>
+          </div>
+          <div class="quiz-feedback" id="mq4-fb"></div>
+        </div>
+
+        <div class="quiz-question" id="mq5">
+          <div class="quiz-title">5. Which of the following will visibly REVERSE the direction of rotation of a DC electric motor?</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkMotorAnswer('mq5', 0, false)">A. Decreasing the number of wire turns from 60 to 20</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq5', 1, false)">B. Making the gap between the magnets wider</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq5', 2, true)">C. Reversing the battery terminals (switching positive and negative)</button>
+            <button class="quiz-option" onclick="checkMotorAnswer('mq5', 3, false)">D. Adding soft carbon grease to the brushes</button>
+          </div>
+          <div class="quiz-feedback" id="mq5-fb"></div>
+        </div>
+
+        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; text-align: center;">
+          <span style="font-size: 0.95rem; font-weight: 700; color: #f8fafc;" id="motor-quiz-score-text">Answer the questions above to test your score!</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const config = {
+      isPlaying: true,
+      speed: 1.0,
+      switchClosed: true,
+      batteryReversed: false,
+      hasCommutator: true,
+      current: 4.0,
+      coilTurns: 40,
+      magnetStrength: 'standard',
+      magnetGap: 'normal',
+      showForceArrows: true,
+      showPermField: true,
+      showCoilField: false,
+      showSymbols: false,
+      showParticles: true,
+      frozenAngle: null
+    };
+
+    let currentAngleDeg = 0;
+    let angularVelocity = 0;
+    let lastCommutatorSwapped = false;
+
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+
+    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / (window.innerHeight - 52), 0.1, 100);
+    const cameraTarget = new THREE.Vector3(0, 0, 0);
+    const spherical = { radius: 9.0, theta: 0.85, phi: 1.15 };
+    updateCamera();
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight - 52);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.4);
+    dirLight1.position.set(10, 16, 12);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.6);
+    dirLight2.position.set(-10, -5, -8);
+    scene.add(dirLight2);
+
+    const baseboard = new THREE.Mesh(
+      new THREE.BoxGeometry(13.0, 0.2, 9.5),
+      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.8, metalness: 0.2 })
+    );
+    baseboard.position.set(0, -2.6, 0);
+    scene.add(baseboard);
+
+    const grid = new THREE.GridHelper(13, 16, 0x1e293b, 0x0f172a);
+    grid.position.y = -2.5;
+    scene.add(grid);
+
+    const motorRoot = new THREE.Group();
+    scene.add(motorRoot);
+
+    const magnetsGroup = new THREE.Group();
+    motorRoot.add(magnetsGroup);
+
+    const rotorGroup = new THREE.Group();
+    motorRoot.add(rotorGroup);
+
+    const coilMeshGroup = new THREE.Group();
+    rotorGroup.add(coilMeshGroup);
+
+    const commutatorGroup = new THREE.Group();
+    rotorGroup.add(commutatorGroup);
+
+    const brushesGroup = new THREE.Group();
+    motorRoot.add(brushesGroup);
+
+    const circuitGroup = new THREE.Group();
+    motorRoot.add(circuitGroup);
+
+    const permFieldGroup = new THREE.Group();
+    motorRoot.add(permFieldGroup);
+
+    const coilFieldGroup = new THREE.Group();
+    rotorGroup.add(coilFieldGroup);
+
+    const forceArrowsGroup = new THREE.Group();
+    motorRoot.add(forceArrowsGroup);
+
+    const symbolsGroup = new THREE.Group();
+    motorRoot.add(symbolsGroup);
+
+    const particlesGroup = new THREE.Group();
+    motorRoot.add(particlesGroup);
+
+    function rebuildMagnets() {
+      while (magnetsGroup.children.length > 0) magnetsGroup.remove(magnetsGroup.children[0]);
+
+      const halfGap = config.magnetGap === 'narrow' ? 1.8 : config.magnetGap === 'wide' ? 3.3 : 2.5;
+      const magW = 1.6;
+      const magH = 2.4;
+      const magD = 3.6;
+
+      const northGeom = new THREE.BoxGeometry(magW, magH, magD);
+      const northMat = new THREE.MeshStandardMaterial({
+        color: config.magnetStrength === 'strong' ? 0xdc2626 : 0xef4444,
+        roughness: 0.25, metalness: 0.3
+      });
+      const northMesh = new THREE.Mesh(northGeom, northMat);
+      northMesh.position.set(-halfGap - magW * 0.5, 0, 0);
+      magnetsGroup.add(northMesh);
+
+      const southGeom = new THREE.BoxGeometry(magW, magH, magD);
+      const southMat = new THREE.MeshStandardMaterial({
+        color: config.magnetStrength === 'strong' ? 0x1d4ed8 : 0x3b82f6,
+        roughness: 0.25, metalness: 0.3
+      });
+      const southMesh = new THREE.Mesh(southGeom, southMat);
+      southMesh.position.set(halfGap + magW * 0.5, 0, 0);
+      magnetsGroup.add(southMesh);
+
+      const bracketMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+      const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, magD + 0.4), bracketMat);
+      b1.position.set(-halfGap - magW - 0.2, -1.0, 0);
+      magnetsGroup.add(b1);
+
+      const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, magD + 0.4), bracketMat);
+      b2.position.set(halfGap + magW + 0.2, -1.0, 0);
+      magnetsGroup.add(b2);
+    }
+
+    function rebuildRotor() {
+      while (coilMeshGroup.children.length > 0) coilMeshGroup.remove(coilMeshGroup.children[0]);
+      while (commutatorGroup.children.length > 0) commutatorGroup.remove(commutatorGroup.children[0]);
+
+      const axleGeom = new THREE.CylinderGeometry(0.09, 0.09, 6.2, 24);
+      axleGeom.rotateX(Math.PI * 0.5);
+      const axleMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.95, roughness: 0.15 });
+      const axle = new THREE.Mesh(axleGeom, axleMat);
+      coilMeshGroup.add(axle);
+
+      const halfW = 1.2;
+      const halfL = 1.6;
+      const wireRadius = 0.065;
+      const copperMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.85, roughness: 0.25 });
+
+      const leftWire = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, halfL * 2, 16), copperMat);
+      leftWire.rotation.x = Math.PI * 0.5;
+      leftWire.position.set(-halfW, 0, 0);
+      coilMeshGroup.add(leftWire);
+
+      const rightWire = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, halfL * 2, 16), copperMat);
+      rightWire.rotation.x = Math.PI * 0.5;
+      rightWire.position.set(halfW, 0, 0);
+      coilMeshGroup.add(rightWire);
+
+      const farWire = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, halfW * 2, 16), copperMat);
+      farWire.rotation.z = Math.PI * 0.5;
+      farWire.position.set(0, 0, -halfL);
+      coilMeshGroup.add(farWire);
+
+      const nearWire1 = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, halfW - 0.25, 16), copperMat);
+      nearWire1.rotation.z = Math.PI * 0.5;
+      nearWire1.position.set(-halfW * 0.5 - 0.12, 0, halfL);
+      coilMeshGroup.add(nearWire1);
+
+      const nearWire2 = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, halfW - 0.25, 16), copperMat);
+      nearWire2.rotation.z = Math.PI * 0.5;
+      nearWire2.position.set(halfW * 0.5 + 0.12, 0, halfL);
+      coilMeshGroup.add(nearWire2);
+
+      const lead1 = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, 0.45, 16), copperMat);
+      lead1.rotation.x = Math.PI * 0.5;
+      lead1.position.set(-0.25, 0, halfL + 0.22);
+      coilMeshGroup.add(lead1);
+
+      const lead2 = new THREE.Mesh(new THREE.CylinderGeometry(wireRadius, wireRadius, 0.45, 16), copperMat);
+      lead2.rotation.x = Math.PI * 0.5;
+      lead2.position.set(0.25, 0, halfL + 0.22);
+      coilMeshGroup.add(lead2);
+
+      const commZ = halfL + 0.45;
+      const commRadius = 0.28;
+      const commLength = 0.4;
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.25 });
+
+      if (config.hasCommutator) {
+        const halfRingGeom = new THREE.CylinderGeometry(commRadius, commRadius, commLength, 24, 1, true, 0.2, Math.PI - 0.4);
+        halfRingGeom.rotateX(Math.PI * 0.5);
+
+        const ringA = new THREE.Mesh(halfRingGeom, brassMat);
+        ringA.position.set(0, 0, commZ);
+        commutatorGroup.add(ringA);
+
+        const ringB = new THREE.Mesh(halfRingGeom, brassMat);
+        ringB.rotation.z = Math.PI;
+        ringB.position.set(0, 0, commZ);
+        commutatorGroup.add(ringB);
+      } else {
+        const solidRingGeom = new THREE.CylinderGeometry(commRadius, commRadius, commLength, 24, 1, true);
+        solidRingGeom.rotateX(Math.PI * 0.5);
+        const solidRing = new THREE.Mesh(solidRingGeom, brassMat);
+        solidRing.position.set(0, 0, commZ);
+        commutatorGroup.add(solidRing);
+      }
+    }
+
+    let brushMeshTop = null;
+    let brushMeshBot = null;
+    let knifeBladeMesh = null;
+
+    function rebuildCircuit() {
+      while (brushesGroup.children.length > 0) brushesGroup.remove(brushesGroup.children[0]);
+      while (circuitGroup.children.length > 0) circuitGroup.remove(circuitGroup.children[0]);
+
+      const commZ = 1.6 + 0.45;
+      const brushMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7, roughness: 0.4 });
+
+      brushMeshTop = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.35), brushMat);
+      brushMeshTop.position.set(0, 0.36, commZ);
+      brushesGroup.add(brushMeshTop);
+
+      brushMeshBot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.35), brushMat);
+      brushMeshBot.position.set(0, -0.36, commZ);
+      brushesGroup.add(brushMeshBot);
+
+      const batGroup = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.55, 0.55, 1.6, 24),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35, metalness: 0.6 })
+      );
+      body.rotation.z = Math.PI * 0.5;
+      batGroup.add(body);
+
+      const goldSleeve = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.552, 0.552, 0.6, 24),
+        new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.85 })
+      );
+      goldSleeve.rotation.z = Math.PI * 0.5;
+      goldSleeve.position.x = 0.45;
+      batGroup.add(goldSleeve);
+
+      const posPip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.2, 0.2, 0.22, 16),
+        new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.2, metalness: 0.95 })
+      );
+      posPip.rotation.z = Math.PI * 0.5;
+      posPip.position.x = 0.88;
+      batGroup.add(posPip);
+
+      batGroup.position.set(3.4, -2.4, 2.0);
+      if (config.batteryReversed) {
+        batGroup.rotation.y = Math.PI;
+      }
+      circuitGroup.add(batGroup);
+
+      const swGroup = new THREE.Group();
+      const swBase = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.15, 1.4), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 }));
+      swGroup.add(swBase);
+
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.25 });
+      const hingePost = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.35, 16), brassMat);
+      hingePost.position.set(0, 0.2, -0.4);
+      swGroup.add(hingePost);
+
+      const contactPost = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.35, 16), brassMat);
+      contactPost.position.set(0, 0.2, 0.4);
+      swGroup.add(contactPost);
+
+      knifeBladeMesh = new THREE.Group();
+      knifeBladeMesh.position.set(0, 0.25, -0.4);
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.9), brassMat);
+      blade.position.set(0, 0.05, 0.45);
+      knifeBladeMesh.add(blade);
+      knifeBladeMesh.rotation.x = config.switchClosed ? 0 : -0.75;
+      swGroup.add(knifeBladeMesh);
+
+      swGroup.position.set(-3.4, -2.45, 2.0);
+      circuitGroup.add(swGroup);
+
+      const wireMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.85, roughness: 0.3 });
+      const wirePaths = [
+        [new THREE.Vector3(0, 0.36, commZ), new THREE.Vector3(1.5, 0.36, commZ), new THREE.Vector3(3.4, -2.3, 1.2)],
+        [new THREE.Vector3(0, -0.36, commZ), new THREE.Vector3(-1.5, -0.36, commZ), new THREE.Vector3(-3.4, -2.3, 1.2)],
+        [new THREE.Vector3(-3.4, -2.3, 2.8), new THREE.Vector3(0, -2.5, 3.2), new THREE.Vector3(3.4, -2.3, 2.8)]
+      ];
+      wirePaths.forEach(pts => {
+        const c = new THREE.CatmullRomCurve3(pts);
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(c, 20, 0.04, 8, false), wireMat);
+        circuitGroup.add(tube);
+      });
+    }
+
+    function rebuildPermanentField() {
+      while (permFieldGroup.children.length > 0) permFieldGroup.remove(permFieldGroup.children[0]);
+      if (!config.showPermField) return;
+
+      const halfGap = config.magnetGap === 'narrow' ? 1.8 : config.magnetGap === 'wide' ? 3.3 : 2.5;
+      const lineCount = 14;
+      const mat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.55 });
+
+      for (let i = 0; i < lineCount; i++) {
+        const t = (i / (lineCount - 1)) - 0.5;
+        const y = t * 1.6;
+        for (let j = -1; j <= 1; j++) {
+          const z = j * 0.9;
+          const points = [
+            new THREE.Vector3(-halfGap, y, z),
+            new THREE.Vector3(halfGap, y, z)
+          ];
+          const geom = new THREE.BufferGeometry().setFromPoints(points);
+          permFieldGroup.add(new THREE.Line(geom, mat));
+        }
+      }
+    }
+
+    let leftArrowMesh = null;
+    let rightArrowMesh = null;
+
+    function buildForceArrows() {
+      while (forceArrowsGroup.children.length > 0) forceArrowsGroup.remove(forceArrowsGroup.children[0]);
+      if (!config.showForceArrows) return;
+
+      function createArrow(colorHex) {
+        const arrow = new THREE.Group();
+        const shaftGeom = new THREE.CylinderGeometry(0.06, 0.06, 1.0, 16);
+        shaftGeom.translate(0, 0.5, 0);
+        const headGeom = new THREE.ConeGeometry(0.16, 0.4, 16);
+        headGeom.translate(0, 1.2, 0);
+
+        const mat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.4, roughness: 0.3 });
+        arrow.add(new THREE.Mesh(shaftGeom, mat));
+        arrow.add(new THREE.Mesh(headGeom, mat));
+        return arrow;
+      }
+
+      leftArrowMesh = createArrow(0x38bdf8);
+      rightArrowMesh = createArrow(0xf43f5e);
+
+      forceArrowsGroup.add(leftArrowMesh);
+      forceArrowsGroup.add(rightArrowMesh);
+    }
+
+    const particles = [];
+    const PARTICLE_COUNT = 45;
+
+    function initParticles() {
+      while (particlesGroup.children.length > 0) particlesGroup.remove(particlesGroup.children[0]);
+      particles.length = 0;
+
+      const geom = new THREE.SphereGeometry(0.065, 10, 10);
+      const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const mesh = new THREE.Mesh(geom, mat);
+        particlesGroup.add(mesh);
+        particles.push({
+          mesh,
+          progress: i / PARTICLE_COUNT,
+          speed: 0.16 + Math.random() * 0.03
+        });
+      }
+    }
+
+    function updateMotorPhysics(delta) {
+      const isSwitchClosed = config.switchClosed && config.current > 0.05;
+      const rawCurrent = isSwitchClosed ? config.current : 0;
+      const turns = config.coilTurns;
+      const batterySign = config.batteryReversed ? -1 : 1;
+
+      const baseB = config.magnetStrength === 'strong' ? 1.8 : 1.0;
+      const gapFactor = config.magnetGap === 'narrow' ? 1.4 : config.magnetGap === 'wide' ? 0.7 : 1.0;
+      const B = baseB * gapFactor;
+
+      let angle = ((currentAngleDeg % 360) + 360) % 360;
+      if (config.frozenAngle !== null) {
+        angle = ((config.frozenAngle % 360) + 360) % 360;
+      }
+
+      const rad = (angle * Math.PI) / 180;
+      const distTo90 = Math.abs(angle - 90);
+      const distTo270 = Math.abs(angle - 270);
+      const inDeadZone = distTo90 < 6 || distTo270 < 6;
+
+      let leftDir = 0;
+      let rightDir = 0;
+      let commutatorSwapped = false;
+
+      if (rawCurrent > 0) {
+        if (config.hasCommutator) {
+          if (angle >= 90 && angle < 270) {
+            commutatorSwapped = true;
+            leftDir = batterySign * -1;
+            rightDir = batterySign * 1;
+          } else {
+            commutatorSwapped = false;
+            leftDir = batterySign * -1;
+            rightDir = batterySign * 1;
+          }
+          if (inDeadZone) {
+            leftDir = 0;
+            rightDir = 0;
+          }
+        } else {
+          if (angle >= 90 && angle < 270) {
+            leftDir = batterySign * 1;
+            rightDir = batterySign * -1;
+          } else {
+            leftDir = batterySign * -1;
+            rightDir = batterySign * 1;
+          }
+        }
+      }
+
+      if (commutatorSwapped !== lastCommutatorSwapped && config.hasCommutator && isSwitchClosed) {
+        lastCommutatorSwapped = commutatorSwapped;
+        triggerCommutatorFlash();
+      }
+
+      const forceMag = turns * rawCurrent * B * 0.006;
+      const leftForceY = leftDir * forceMag;
+      const rightForceY = rightDir * forceMag;
+
+      const momentArm = Math.cos(rad);
+      let torque = 0;
+      if (isSwitchClosed && !inDeadZone) {
+        if (config.hasCommutator) {
+          torque = batterySign * forceMag * Math.abs(momentArm);
+        } else {
+          torque = batterySign * forceMag * momentArm;
+        }
+      }
+
+      if (config.frozenAngle === null && config.isPlaying) {
+        const I_moment = 0.45;
+        const damping = config.hasCommutator ? 0.35 : 0.65;
+        const angularAcc = (torque / I_moment) * 180;
+        
+        angularVelocity += angularAcc * delta * config.speed;
+        angularVelocity *= Math.pow(damping, delta * config.speed);
+        
+        currentAngleDeg += angularVelocity * delta * config.speed;
+        currentAngleDeg = ((currentAngleDeg % 360) + 360) % 360;
+      }
+
+      const currentRad = (currentAngleDeg * Math.PI) / 180;
+      rotorGroup.rotation.z = currentRad;
+
+      if (leftArrowMesh && rightArrowMesh && config.showForceArrows) {
+        const halfW = 1.2;
+        const leftX = -halfW * Math.cos(currentRad);
+        const leftY = -halfW * Math.sin(currentRad);
+        const rightX = halfW * Math.cos(currentRad);
+        const rightY = halfW * Math.sin(currentRad);
+
+        leftArrowMesh.position.set(leftX, leftY, 0);
+        rightArrowMesh.position.set(rightX, rightY, 0);
+
+        const leftScale = Math.max(0.001, Math.abs(leftForceY) * 1.5);
+        const rightScale = Math.max(0.001, Math.abs(rightForceY) * 1.5);
+
+        leftArrowMesh.scale.set(1, leftScale, 1);
+        rightArrowMesh.scale.set(1, rightScale, 1);
+
+        leftArrowMesh.rotation.z = leftForceY >= 0 ? 0 : Math.PI;
+        rightArrowMesh.rotation.z = rightForceY >= 0 ? 0 : Math.PI;
+
+        leftArrowMesh.visible = Math.abs(leftForceY) > 0.01;
+        rightArrowMesh.visible = Math.abs(rightForceY) > 0.01;
+      }
+
+      document.getElementById('stat-angle').innerText = currentAngleDeg.toFixed(1) + '°';
+      document.getElementById('stat-f-left').innerText = (leftForceY >= 0 ? '+' : '') + leftForceY.toFixed(2) + ' N ' + (leftForceY > 0 ? '(UP)' : leftForceY < 0 ? '(DOWN)' : '(0)');
+      document.getElementById('stat-f-right').innerText = (rightForceY >= 0 ? '+' : '') + rightForceY.toFixed(2) + ' N ' + (rightForceY > 0 ? '(UP)' : rightForceY < 0 ? '(DOWN)' : '(0)');
+
+      const badge = document.getElementById('badge-rot-status');
+      if (!isSwitchClosed) {
+        badge.innerText = 'Power Cut (Stationary)';
+        badge.style.color = '#ef4444';
+      } else if (!config.hasCommutator) {
+        badge.innerText = 'Oscillating Alignment';
+        badge.style.color = '#f59e0b';
+      } else {
+        badge.innerText = config.batteryReversed ? 'Continuous Counter-Clockwise' : 'Continuous Clockwise';
+        badge.style.color = '#10b981';
+      }
+
+      const maxTorque = 60 * 6.0 * (1.8 * 1.4) * 0.006;
+      const peakTorque = turns * rawCurrent * B * 0.006;
+      const pct = Math.min(100, Math.round((peakTorque / maxTorque) * 100));
+      document.getElementById('label-torque-val').innerText = pct + '%';
+      document.getElementById('meter-torque-bar').style.width = pct + '%';
+
+      updateParticlesAnimation(delta, isSwitchClosed, batterySign, currentRad);
+    }
+
+    function triggerCommutatorFlash() {
+      const flash = document.getElementById('commutator-flash');
+      flash.classList.add('active');
+      setTimeout(() => flash.classList.remove('active'), 1200);
+    }
+
+    function updateParticlesAnimation(delta, isFlowing, dir, rad) {
+      if (!config.showParticles) {
+        particlesGroup.visible = false;
+        return;
+      }
+      particlesGroup.visible = true;
+
+      const halfW = 1.2;
+      const halfL = 1.6;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (isFlowing && config.isPlaying) {
+          p.progress += dir * p.speed * delta * (config.current / 4.0);
+          if (p.progress > 1.0) p.progress -= 1.0;
+          if (p.progress < 0.0) p.progress += 1.0;
+        }
+
+        const d = p.progress * 4.0;
+        let lx = 0, lz = 0;
+        if (d < 1.0) {
+          lx = -halfW;
+          lz = -halfL + (d / 1.0) * (halfL * 2);
+        } else if (d < 2.0) {
+          lx = -halfW + ((d - 1.0) / 1.0) * (halfW * 2);
+          lz = halfL;
+        } else if (d < 3.0) {
+          lx = halfW;
+          lz = halfL - ((d - 2.0) / 1.0) * (halfL * 2);
+        } else {
+          lx = halfW - ((d - 3.0) / 1.0) * (halfW * 2);
+          lz = -halfL;
+        }
+
+        const wx = lx * Math.cos(rad);
+        const wy = lx * Math.sin(rad);
+        p.mesh.position.set(wx, wy, lz);
+      }
+    }
+
+    window.togglePlayPause = function() {
+      config.isPlaying = !config.isPlaying;
+      config.frozenAngle = null;
+      const btn = document.getElementById('btn-play-toggle');
+      const topBtn = document.getElementById('btn-top-play');
+      if (config.isPlaying) {
+        btn.innerText = '⏸ Pause';
+        topBtn.innerText = '⏸ Pause';
+      } else {
+        btn.innerText = '▶ Play';
+        topBtn.innerText = '▶ Play';
+      }
+    };
+
+    window.stepMotor = function(deg) {
+      config.isPlaying = false;
+      currentAngleDeg = (currentAngleDeg + deg) % 360;
+      config.frozenAngle = currentAngleDeg;
+      document.getElementById('btn-play-toggle').innerText = '▶ Play';
+      document.getElementById('btn-top-play').innerText = '▶ Play';
+    };
+
+    window.toggleSpeed = function() {
+      config.speed = config.speed === 1.0 ? 0.25 : 1.0;
+      const btn = document.getElementById('btn-speed-toggle');
+      btn.innerText = config.speed === 1.0 ? '⏱ 1.0× Speed' : '🐢 0.25× Slow';
+    };
+
+    window.toggleSwitch = function() {
+      config.switchClosed = !config.switchClosed;
+      const topBtn = document.getElementById('btn-top-switch');
+      if (config.switchClosed) {
+        topBtn.innerText = '⚡ Switch: CLOSED';
+        topBtn.style.color = '#10b981';
+      } else {
+        topBtn.innerText = '⚡ Switch: OPEN';
+        topBtn.style.color = '#ef4444';
+      }
+      if (knifeBladeMesh) {
+        knifeBladeMesh.rotation.x = config.switchClosed ? 0 : -0.75;
+      }
+    };
+
+    window.reverseBattery = function() {
+      config.batteryReversed = !config.batteryReversed;
+      rebuildCircuit();
+    };
+
+    window.toggleCommutator = function(checked) {
+      config.hasCommutator = checked;
+      document.getElementById('label-comm-desc').innerText = checked ? 'Swaps connections every half-turn' : 'DISABLED: current does not reverse';
+      document.getElementById('stat-comm-status').innerText = checked ? 'Active Contact' : 'Disabled (Continuous)';
+      document.getElementById('stat-comm-status').style.color = checked ? '#10b981' : '#f59e0b';
+      rebuildRotor();
+    };
+
+    window.setCurrentLevel = function(lvl) {
+      document.getElementById('btn-cur-low').classList.remove('active');
+      document.getElementById('btn-cur-med').classList.remove('active');
+      document.getElementById('btn-cur-high').classList.remove('active');
+      document.getElementById('btn-cur-' + lvl).classList.add('active');
+
+      const vals = { low: 2.0, med: 4.0, high: 6.0 };
+      const labels = { low: 'Low (2.0 A)', med: 'Medium (4.0 A)', high: 'High (6.0 A)' };
+      config.current = vals[lvl];
+      document.getElementById('label-current').innerText = labels[lvl];
+    };
+
+    window.setTurns = function(turns) {
+      [20, 40, 60].forEach(t => document.getElementById('btn-turns-' + t).classList.remove('active'));
+      document.getElementById('btn-turns-' + turns).classList.add('active');
+      config.coilTurns = turns;
+      document.getElementById('label-turns').innerText = turns + ' Turns';
+    };
+
+    window.setMagnetStrength = function(s) {
+      document.getElementById('btn-mag-std').classList.remove('active');
+      document.getElementById('btn-mag-strong').classList.remove('active');
+      document.getElementById('btn-mag-' + s).classList.add('active');
+      config.magnetStrength = s;
+      updateMagnetLabel();
+      rebuildMagnets();
+      rebuildPermanentField();
+    };
+
+    window.setMagnetGap = function(g) {
+      ['narrow', 'normal', 'wide'].forEach(x => document.getElementById('btn-gap-' + x).classList.remove('active'));
+      document.getElementById('btn-gap-' + g).classList.add('active');
+      config.magnetGap = g;
+      updateMagnetLabel();
+      rebuildMagnets();
+      rebuildPermanentField();
+    };
+
+    function updateMagnetLabel() {
+      const s = config.magnetStrength === 'strong' ? 'Strong' : 'Standard';
+      const g = config.magnetGap.charAt(0).toUpperCase() + config.magnetGap.slice(1);
+      document.getElementById('label-magnet').innerText = s + ' / ' + g;
+    }
+
+    window.toggleForceArrows = function(c) {
+      config.showForceArrows = c;
+      buildForceArrows();
+    };
+
+    window.togglePermanentField = function(c) {
+      config.showPermField = c;
+      rebuildPermanentField();
+    };
+
+    window.toggleCoilField = function(c) {
+      config.showCoilField = c;
+    };
+
+    window.toggleSymbols = function(c) {
+      config.showSymbols = c;
+    };
+
+    window.toggleParticles = function(c) {
+      config.showParticles = c;
+    };
+
+    window.setCameraView = function(view) {
+      if (view === 'front') {
+        spherical.radius = 8.5; spherical.theta = 0; spherical.phi = Math.PI * 0.5;
+      } else if (view === 'top') {
+        spherical.radius = 10.0; spherical.theta = 0; spherical.phi = 0.05;
+      } else if (view === 'commutator') {
+        spherical.radius = 4.2; spherical.theta = 0.4; spherical.phi = 1.1;
+      } else {
+        spherical.radius = 9.0; spherical.theta = 0.85; spherical.phi = 1.15;
+      }
+      updateCamera();
+    };
+
+    function updateCamera() {
+      const { radius, theta, phi } = spherical;
+      const x = cameraTarget.x + radius * Math.sin(phi) * Math.sin(theta);
+      const y = cameraTarget.y + radius * Math.cos(phi);
+      const z = cameraTarget.z + radius * Math.sin(phi) * Math.cos(theta);
+      camera.position.set(x, y, z);
+      camera.lookAt(cameraTarget);
+    }
+
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+
+    container.addEventListener('mousedown', e => {
+      isDragging = true;
+      prevMouse = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouse.x;
+      const dy = e.clientY - prevMouse.y;
+      prevMouse = { x: e.clientX, y: e.clientY };
+
+      spherical.theta -= dx * 0.007;
+      spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08, spherical.phi - dy * 0.007));
+      updateCamera();
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    container.addEventListener('wheel', e => {
+      e.preventDefault();
+      spherical.radius = Math.max(3.2, Math.min(18.0, spherical.radius * (e.deltaY > 0 ? 1.08 : 0.92)));
+      updateCamera();
+    }, { passive: false });
+
+    window.switchView = function(viewName) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active-view'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+      if (viewName !== 'lab') {
+        const v = document.getElementById('view-' + viewName);
+        if (v) v.classList.add('active-view');
+      }
+
+      const tabIdx = { 'lab': 0, 'practical': 1, 'theory': 2, 'quiz': 3 }[viewName];
+      const tabs = document.querySelectorAll('.nav-tab');
+      if (tabs[tabIdx]) tabs[tabIdx].classList.add('active');
+    };
+
+    const motorQuizAnswers = {
+      mq1: { correct: 1, explanation: 'Opposite vertical Lorentz forces act on the two long sides of the rectangular coil, creating a couple/torque that turns the axle.' },
+      mq2: { correct: 0, explanation: 'In Fleming\'s Left-Hand Rule, the Thumb points in the direction of Motion/Force (F).' },
+      mq3: { correct: 2, explanation: 'The split-ring commutator flips electrical connections every half-turn (180°), ensuring torque always acts in the same direction.' },
+      mq4: { correct: 1, explanation: 'Without a commutator, the forces oppose rotation after passing the vertical point, causing the coil to oscillate and stop at 90°.' },
+      mq5: { correct: 2, explanation: 'Swapping battery polarity reverses current direction, which flips the Lorentz force arrows and reverses rotation direction!' }
+    };
+
+    let motorScores = {};
+
+    window.checkMotorAnswer = function(qId, choiceIdx, isCorrect) {
+      const qBox = document.getElementById(qId);
+      const buttons = qBox.querySelectorAll('.quiz-option');
+      buttons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('correct', 'incorrect');
+      });
+
+      const fb = document.getElementById(qId + '-fb');
+      fb.style.display = 'block';
+
+      if (isCorrect) {
+        buttons[choiceIdx].classList.add('correct');
+        fb.innerHTML = '<span style="color: #10b981; font-weight: bold;">✔ Correct!</span> ' + motorQuizAnswers[qId].explanation;
+        motorScores[qId] = 1;
+      } else {
+        buttons[choiceIdx].classList.add('incorrect');
+        buttons[motorQuizAnswers[qId].correct].classList.add('correct');
+        fb.innerHTML = '<span style="color: #ef4444; font-weight: bold;">✘ Incorrect.</span> ' + motorQuizAnswers[qId].explanation;
+        motorScores[qId] = 0;
+      }
+
+      const total = Object.values(motorScores).reduce((a, b) => a + b, 0);
+      document.getElementById('motor-quiz-score-text').innerText = 'Score: ' + total + ' / 5 (' + Math.round((total / 5) * 100) + '%)' + (total === 5 ? ' 🌟 Master of the Electric Motor!' : '');
+    };
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      updateMotorPhysics(delta);
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / (window.innerHeight - 52);
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight - 52);
+    });
+
+    rebuildMagnets();
+    rebuildRotor();
+    rebuildCircuit();
+    rebuildPermanentField();
+    buildForceArrows();
+    initParticles();
+    animate();
+  </script>
+</body>
+</html>`;
+}
