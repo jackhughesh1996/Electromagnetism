@@ -67,7 +67,15 @@ const L3_CHALLENGE_TABS = [
 ];
 
 export default function App() {
-  const [activeLesson, setActiveLesson] = useState<ActiveLesson>('L4'); // Defaults to L4 Electric Motor Explorer as requested
+  const [activeLesson, setActiveLesson] = useState<ActiveLesson>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const lessonParam = params.get('lesson');
+      if (lessonParam === 'L3' || lessonParam === 'l3') return 'L3';
+      if (lessonParam === 'L4' || lessonParam === 'l4') return 'L4';
+    }
+    return 'L4';
+  });
   const [activeTab, setActiveTab] = useState<'practical' | 'sandbox'>('practical');
   const [activeStep, setActiveStep] = useState<number>(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
@@ -141,7 +149,25 @@ export default function App() {
     }
   };
 
-  const handleDownloadStandalone = () => {
+  const handleDownloadStandalone = async () => {
+    try {
+      const response = await fetch('/lesson-3-electromagnet.html');
+      if (response.ok) {
+        const text = await response.text();
+        const blob = new Blob([text], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'lesson-3-electromagnet.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch {
+      // Fallback to generator
+    }
     const htmlContent = generateStandaloneHtml(config);
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -154,7 +180,25 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadMotorStandalone = () => {
+  const handleDownloadMotorStandalone = async () => {
+    try {
+      const response = await fetch('/lesson-4-electric-motor.html');
+      if (response.ok) {
+        const text = await response.text();
+        const blob = new Blob([text], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'lesson-4-electric-motor.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch {
+      // Fallback to generator
+    }
     const htmlContent = generateMotorStandaloneHtml();
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
