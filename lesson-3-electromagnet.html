@@ -4,1499 +4,1416 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Year 8 Science: Lesson 3 — Electromagnet Lab (Standalone 3D Simulator)</title>
-  <meta name="description" content="Complete standalone 3D interactive physics simulation for Year 8 Electromagnet Lab. Investigate Oersted's discovery, wire-loop-solenoid progression, soft iron cores, and factors affecting strength." />
+  <meta name="description" content="Interactive 3D simulation exploring straight wires, loops, solenoids, and soft iron core electromagnets for KS3 / Year 8 Science." />
+  <!-- Three.js from dependable cdnjs (r128 UMD) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    :root {
-      --bg-dark: #030712;
-      --panel-bg: rgba(15, 23, 42, 0.94);
-      --panel-border: rgba(51, 65, 85, 0.7);
-      --accent: #38bdf8;
-      --accent-hover: #0284c7;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #020617;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; width: 100vw; display: flex; flex-direction: column; }
-    
-    /* Top Header Bar */
     header {
-      height: 52px; background: rgba(15, 23, 42, 0.98); border-bottom: 1px solid #1e293b;
-      display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
-      z-index: 20; shrink: 0;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid #1e293b;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(8px);
     }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon { width: 32px; height: 32px; background: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-    .brand-title { font-size: 0.95rem; font-weight: 700; color: #fff; line-height: 1.2; }
-    .brand-badge { font-size: 0.65rem; background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 2px 6px; border-radius: 6px; font-weight: 600; margin-left: 6px; }
-    
-    .nav-tabs { display: flex; gap: 4px; background: #090d16; padding: 3px; border-radius: 10px; border: 1px solid #1e293b; }
-    .nav-tab {
-      background: transparent; color: var(--text-muted); border: none; padding: 6px 12px;
-      font-size: 0.78rem; font-weight: 600; border-radius: 7px; cursor: pointer; transition: all 0.15s ease;
-      display: flex; align-items: center; gap: 6px;
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .nav-tab:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
-    .nav-tab.active { background: #0284c7; color: #fff; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4); }
-
-    .header-actions { display: flex; align-items: center; gap: 8px; }
-    .btn-action {
-      background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 10px;
-      font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
-      display: inline-flex; align-items: center; gap: 6px;
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      background: #0284c7;
+      color: #fff;
     }
-    .btn-action:hover { background: #334155; color: #fff; }
+    .nav-tabs {
+      display: flex;
+      gap: 0.4rem;
+      background: #0f172a;
+      padding: 0.25rem;
+      border-radius: 0.75rem;
+      border: 1px solid #1e293b;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .tab-btn:hover { color: #f8fafc; background: #1e293b; }
+    .tab-btn.active {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
 
     /* Main Container */
-    #main-container { flex: 1; position: relative; width: 100%; height: calc(100vh - 52px); overflow: hidden; }
-    #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-
-    /* Floating UI Panels */
-    .overlay-panel {
-      position: absolute; z-index: 10;
-      background: var(--panel-bg); backdrop-filter: blur(12px);
-      border: 1px solid var(--panel-border); border-radius: 14px;
-      box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
 
-    #left-panel {
-      top: 14px; left: 14px; width: 360px; max-height: calc(100vh - 80px);
-      overflow-y: auto; padding: 16px;
+    /* Tab 1: 3D Simulator */
+    #tab-simulator {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: calc(100vh - 65px);
+    }
+    @media (min-width: 1024px) {
+      #tab-simulator {
+        flex-direction: row;
+        height: calc(100vh - 65px);
+        overflow: hidden;
+      }
     }
 
-    /* Modal Pages (Practical, Theory, Quiz) */
-    .tab-view {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(3, 7, 18, 0.96); backdrop-filter: blur(8px);
-      z-index: 15; overflow-y: auto; padding: 24px; display: none;
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      background: #030712;
+      min-height: 420px;
+      overflow: hidden;
     }
-    .tab-view.active-view { display: block; }
-    .tab-content-container { max-width: 900px; margin: 0 auto; padding-bottom: 40px; }
+    #three-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #three-canvas:active { cursor: grabbing; }
 
-    /* Controls Styling */
-    h2.panel-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
-    p.panel-desc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.35; }
-    
+    /* Canvas Overlays */
+    .canvas-overlay-top {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .canvas-overlay-top > * { pointer-events: auto; }
+
+    .readout-pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 0.75rem;
+      padding: 0.5rem 0.85rem;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .readout-label { font-size: 0.7rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+    .readout-val { font-size: 1.15rem; font-weight: 800; color: #38bdf8; font-variant-numeric: tabular-nums; }
+
+    .canvas-overlay-right {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      pointer-events: none;
+    }
+    .cam-btn {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: all 0.15s ease;
+    }
+    .cam-btn:hover { background: #1e293b; color: #38bdf8; border-color: #38bdf8; }
+
+    .canvas-hint {
+      position: absolute;
+      bottom: 0.75rem;
+      left: 1rem;
+      font-size: 0.7rem;
+      color: #64748b;
+      background: rgba(2, 6, 23, 0.7);
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+
+    /* Sidebar Controls */
+    .sidebar {
+      width: 100%;
+      background: #0b1329;
+      border-top: 1px solid #1e293b;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      overflow-y: auto;
+    }
+    @media (min-width: 1024px) {
+      .sidebar {
+        width: 380px;
+        min-width: 380px;
+        border-top: none;
+        border-left: 1px solid #1e293b;
+      }
+    }
+
     .section-title {
-      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-      color: #94a3b8; margin: 12px 0 6px 0; border-bottom: 1px solid #1e293b; padding-bottom: 3px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .btn-grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
 
-    button.btn-opt {
-      background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
-      padding: 7px 9px; border-radius: 8px; font-size: 0.74rem; font-weight: 600; cursor: pointer;
-      transition: all 0.15s ease; text-align: center;
+    /* Step Selector */
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
     }
-    button.btn-opt:hover { background: #334155; color: #fff; }
-    button.btn-opt.active { background: #0284c7; color: #fff; border-color: #38bdf8; }
-    button.btn-switch-active { background: #059669; color: #fff; border-color: #10b981; }
+    .step-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 0.45rem 0.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .step-btn:hover { background: #334155; color: #f8fafc; }
+    .step-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+      font-weight: 700;
+    }
 
-    .control-row { margin-bottom: 10px; }
-    .control-label { display: flex; justify-content: space-between; font-size: 0.74rem; color: #cbd5e1; margin-bottom: 4px; }
-    .control-value { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); font-weight: 700; }
-    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    /* Switch Component */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.85rem;
+      background: #1e293b;
+      border-radius: 0.65rem;
+      margin-bottom: 0.75rem;
+    }
+    .switch-label { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; }
+    .switch-btn {
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .switch-btn.on {
+      background: #22c55e;
+      color: #052e16;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+    }
+    .switch-btn.off {
+      background: #ef4444;
+      color: #450a0a;
+    }
 
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.75rem; color: #cbd5e1; }
-    .switch-toggle {
-      position: relative; display: inline-block; width: 34px; height: 18px;
+    /* Sliders */
+    .control-group { margin-bottom: 1rem; }
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 0.35rem;
     }
-    .switch-toggle input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #334155; transition: .2s; border-radius: 20px;
+    .control-val { color: #38bdf8; font-weight: 700; }
+    input[type=range] {
+      width: 100%;
+      height: 6px;
+      background: #334155;
+      border-radius: 9999px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
     }
-    .slider:before {
-      position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
-      background-color: white; transition: .2s; border-radius: 50%;
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+      transition: transform 0.1s;
     }
-    input:checked + .slider { background-color: #0284c7; }
-    input:checked + .slider:before { transform: translateX(16px); }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 
-    /* Key takeaways / notes card */
-    .info-card {
-      background: rgba(15, 23, 42, 0.7); border: 1px solid #1e293b; border-radius: 8px;
-      padding: 10px; margin-top: 10px; font-size: 0.72rem; line-height: 1.4; color: #cbd5e1;
+    /* Core selector */
+    .core-select-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
     }
-    .info-card strong { color: #facc15; }
+    .core-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 0.4rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .core-btn:hover { background: #334155; }
+    .core-btn.active {
+      background: #818cf8;
+      color: #0f172a;
+      border-color: #a5b4fc;
+      font-weight: 700;
+    }
 
-    /* Live HUDs */
-    #hud-probe {
-      position: absolute; bottom: 16px; left: 16px; z-index: 10;
-      background: var(--panel-bg); backdrop-filter: blur(10px);
-      border: 1px solid var(--panel-border); border-radius: 12px;
-      padding: 12px 14px; width: 280px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    /* Checkbox Toggles */
+    .toggles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
     }
-    .probe-row { display: flex; justify-content: space-between; font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
-    .probe-row span:last-child { font-family: monospace; font-weight: bold; color: #f8fafc; }
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+    .toggle-item input { accent-color: #38bdf8; width: 15px; height: 15px; }
 
-    #hud-camera {
-      position: absolute; bottom: 16px; right: 16px; z-index: 10;
-      background: var(--panel-bg); backdrop-filter: blur(10px);
-      border: 1px solid var(--panel-border); border-radius: 12px;
-      padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
-    }
-    .cam-btn-group { display: flex; gap: 4px; }
-    .btn-cam {
-      background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
-      font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer;
-    }
-    .btn-cam:hover { background: #334155; color: #fff; }
-
-    /* Cards & Grid for Theory & Challenges */
-    .challenge-card {
-      background: #0f172a; border: 1px solid #334155; border-radius: 12px;
-      padding: 18px; margin-bottom: 16px; transition: border-color 0.2s ease;
-    }
-    .challenge-card:hover { border-color: #38bdf8; }
-    .challenge-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .challenge-step { font-size: 0.7rem; font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 6px; }
-    .challenge-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .challenge-body { font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; }
-    .action-box {
-      background: #020617; border-left: 3px solid #0284c7; padding: 10px 12px;
-      border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 0.8rem; color: #94a3b8;
-    }
-    .action-box strong { color: #f8fafc; }
-
-    /* Interactive Quiz */
-    .quiz-question { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    .quiz-title { font-size: 0.92rem; font-weight: 700; color: #fff; margin-bottom: 10px; }
-    .quiz-options { display: flex; flex-direction: column; gap: 6px; }
-    .quiz-option {
-      background: #1e293b; border: 1px solid #334155; padding: 8px 12px; border-radius: 8px;
-      color: #cbd5e1; font-size: 0.8rem; cursor: pointer; text-align: left; transition: all 0.15s ease;
-    }
-    .quiz-option:hover { background: #334155; color: #fff; }
-    .quiz-option.correct { background: #065f46; border-color: #10b981; color: #fff; }
-    .quiz-option.incorrect { background: #991b1b; border-color: #ef4444; color: #fff; }
-    .quiz-feedback { margin-top: 8px; font-size: 0.78rem; line-height: 1.4; display: none; }
-
-    /* Table */
-    table.data-table {
-      width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.8rem; text-align: left;
-    }
-    table.data-table th, table.data-table td {
-      border: 1px solid #334155; padding: 8px 12px;
-    }
-    table.data-table th { background: #1e293b; color: #38bdf8; font-weight: 700; }
-    table.data-table tr:nth-child(even) { background: rgba(30, 41, 59, 0.4); }
-
-    /* Paperclip Lift Animation Box */
+    /* Lift summary */
     .lift-box {
-      background: #020617; border: 1px solid #334155; border-radius: 10px; padding: 14px;
-      display: flex; align-items: center; justify-content: space-around; margin: 12px 0;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .lift-metric { text-align: center; }
-    .lift-num { font-size: 1.8rem; font-weight: 800; color: #38bdf8; font-family: monospace; }
-    .lift-label { font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; }
+    .lift-count { font-size: 1.75rem; font-weight: 900; color: #f59e0b; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    /* Other Tabs Content */
+    .tab-content {
+      display: none;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+      width: 100%;
+    }
+    .tab-content.active { display: block; }
+
+    h2 { font-size: 1.5rem; font-weight: 800; color: #f8fafc; margin-bottom: 1rem; }
+    h3 { font-size: 1.15rem; font-weight: 700; color: #38bdf8; margin: 1.25rem 0 0.5rem; }
+    p { color: #cbd5e1; line-height: 1.6; margin-bottom: 1rem; font-size: 0.95rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      background: #0f172a;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #1e293b;
+    }
+    th { background: #1e293b; color: #38bdf8; font-weight: 700; }
+    tr:last-child td { border-bottom: none; }
+
+    .quiz-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .quiz-q { font-weight: 700; font-size: 1rem; color: #f8fafc; margin-bottom: 0.75rem; }
+    .quiz-options { display: flex; flex-direction: column; gap: 0.4rem; }
+    .quiz-opt-btn {
+      text-align: left;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 0.65rem 0.9rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .quiz-opt-btn:hover { background: #334155; color: #fff; }
+    .quiz-opt-btn.correct { background: #166534; border-color: #22c55e; color: #dcfce7; font-weight: 700; }
+    .quiz-opt-btn.incorrect { background: #991b1b; border-color: #ef4444; color: #fee2e2; }
+    .quiz-feedback { margin-top: 0.6rem; font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.7rem; border-radius: 0.4rem; display: none; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.correct { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-feedback.incorrect { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    .callout {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 4px solid #38bdf8;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .callout-title { font-weight: 700; color: #38bdf8; margin-bottom: 0.25rem; font-size: 0.9rem; }
   </style>
-  <!-- Load Three.js & OrbitControls from reliable CDNs -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
   <!-- Top Header Navigation -->
   <header>
-    <div class="brand">
-      <div class="brand-icon">🧲</div>
-      <div>
-        <div style="display: flex; align-items: center;">
-          <span class="brand-title">Electromagnet Virtual Lab</span>
-          <span class="brand-badge">Lesson 3 • Year 8 KS3</span>
-        </div>
-      </div>
+    <div class="brand-title">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+      <span>Year 8 Electromagnet Lab</span>
+      <span class="badge">Lesson 3</span>
     </div>
 
-    <!-- Mode Tabs -->
     <nav class="nav-tabs">
-      <button class="nav-tab active" onclick="switchView('lab')">
-        <span>🔬 3D Simulator</span>
+      <button class="tab-btn active" onclick="switchTab('simulator')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+        3D Simulation
       </button>
-      <button class="nav-tab" onclick="switchView('practical')">
-        <span>📋 5 Challenges</span>
+      <button class="tab-btn" onclick="switchTab('theory')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        Theory & Notes
       </button>
-      <button class="nav-tab" onclick="switchView('theory')">
-        <span>📖 Theory & Laws</span>
-      </button>
-      <button class="nav-tab" onclick="switchView('quiz')">
-        <span>❓ Quick Quiz</span>
+      <button class="tab-btn" onclick="switchTab('quiz')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Self-Check Quiz
       </button>
     </nav>
-
-    <!-- Header Actions -->
-    <div class="header-actions">
-      <button class="btn-action" onclick="toggleKnifeSwitch()" id="btn-top-switch" title="Open or close the knife switch">
-        ⚡ Switch: CLOSED
-      </button>
-      <button class="btn-action" onclick="reverseBatteryPolarity()" title="Reverse the D-cell battery polarity">
-        🔄 Polarity: Normal
-      </button>
-    </div>
   </header>
 
-  <!-- Main Viewport -->
-  <main id="main-container">
-    <div id="canvas-container"></div>
+  <!-- Main Viewports -->
+  <main>
+    <!-- TAB 1: 3D SIMULATOR -->
+    <div id="tab-simulator">
+      <!-- 3D Canvas Viewport -->
+      <div class="canvas-container" id="canvas-container">
+        <canvas id="three-canvas"></canvas>
 
-    <!-- 3D LAB FLOATING CONTROL PANEL -->
-    <div id="left-panel" class="overlay-panel">
-      <h2 class="panel-title">
-        <span>ELECTROMAGNET SETUP</span>
-        <span style="font-size: 0.68rem; color: #38bdf8; font-weight: normal;">Live 3D Physics</span>
-      </h2>
-      <p class="panel-desc">Investigate how electric current in conductors generates magnetic fields and how adding an iron core creates an electromagnet.</p>
-
-      <!-- 1. Apparatus Progression -->
-      <div class="section-title">1. APPARATUS STAGE</div>
-      <div class="btn-grid-4">
-        <button id="btn-wire" class="btn-opt" onclick="setApparatusMode('wire')">1. Straight Wire</button>
-        <button id="btn-coil" class="btn-opt" onclick="setApparatusMode('coil')">2. Single Loop</button>
-        <button id="btn-solenoid" class="btn-opt" onclick="setApparatusMode('solenoid')">3. Solenoid Coil</button>
-        <button id="btn-electromagnet" class="btn-opt active" onclick="setApparatusMode('electromagnet')">4. Electromagnet</button>
-      </div>
-
-      <!-- 2. Circuit Controls -->
-      <div class="section-title">2. CIRCUIT HARDWARE</div>
-      <div class="btn-grid">
-        <button id="btn-switch-state" class="btn-opt btn-switch-active" onclick="toggleKnifeSwitch()">
-          ⚡ Knife Switch: CLOSED
-        </button>
-        <button id="btn-polarity-state" class="btn-opt" onclick="reverseBatteryPolarity()">
-          🔄 Polarity: (+ ➔ −)
-        </button>
-      </div>
-      <div class="btn-grid">
-        <button id="btn-cells" class="btn-opt" onclick="cycleCells()">
-          🔋 1× D-Cell (1.5V)
-        </button>
-        <button id="btn-particle-mode" class="btn-opt" onclick="toggleParticleMode()">
-          ⚛ Electrons (e⁻)
-        </button>
-      </div>
-
-      <!-- 3. Physical Parameters -->
-      <div class="section-title">3. VARIABLE CONTROLS</div>
-      <div class="control-row">
-        <div class="control-label">
-          <span>Current (I)</span>
-          <span id="label-current" class="control-value">6.0 A</span>
-        </div>
-        <input type="range" id="slider-current" min="-10" max="10" step="0.5" value="6.0" oninput="onCurrentSlider(this.value)" />
-      </div>
-
-      <div id="solenoid-controls-group">
-        <div class="control-row">
-          <div class="control-label">
-            <span>Coil Turns (N)</span>
-            <span id="label-turns" class="control-value">12 turns</span>
+        <!-- Top-left real-time measurements -->
+        <div class="canvas-overlay-top">
+          <div class="readout-pill">
+            <div class="readout-label">Field Strength (B)</div>
+            <div class="readout-val" id="readout-b">0.00 mT</div>
           </div>
-          <input type="range" id="slider-turns" min="4" max="24" step="1" value="12" oninput="onTurnsSlider(this.value)" />
+          <div class="readout-pill">
+            <div class="readout-label">Paperclips Lifted</div>
+            <div class="readout-val" style="color: #f59e0b;" id="readout-clips">0 clips</div>
+          </div>
         </div>
 
-        <div class="toggle-row" id="core-toggle-row">
-          <span>Insert Soft Iron Core (×80 strength)</span>
-          <label class="switch-toggle">
-            <input type="checkbox" id="check-core" checked onchange="onCoreToggle(this.checked)" />
-            <span class="slider"></span>
-          </label>
+        <!-- Top-right Camera Presets -->
+        <div class="canvas-overlay-right">
+          <button class="cam-btn" onclick="setPreset('front')">Front View</button>
+          <button class="cam-btn" onclick="setPreset('side')">Side View</button>
+          <button class="cam-btn" onclick="setPreset('top')">Top View</button>
+          <button class="cam-btn" onclick="setPreset('iso')">Reset 3D</button>
         </div>
+
+        <div class="canvas-hint">Drag mouse/touch to rotate • Scroll to zoom • Right-click to pan</div>
       </div>
 
-      <!-- 4. Visual Overlays -->
-      <div class="section-title">4. VISUALIZATION OVERLAYS</div>
-      <div class="toggle-row">
-        <span>Magnetic Field Lines (N ➔ S)</span>
-        <label class="switch-toggle">
-          <input type="checkbox" id="check-fieldlines" checked onchange="toggleFieldLines(this.checked)" />
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="toggle-row">
-        <span>Particle Flow (Current / Electrons)</span>
-        <label class="switch-toggle">
-          <input type="checkbox" id="check-particles" checked onchange="toggleParticles(this.checked)" />
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="toggle-row">
-        <span>Plotting Compass Probe</span>
-        <label class="switch-toggle">
-          <input type="checkbox" id="check-compass" checked onchange="toggleCompass(this.checked)" />
-          <span class="slider"></span>
-        </label>
-      </div>
+      <!-- Right Sidebar Control Panel -->
+      <div class="sidebar">
+        <!-- Step progression selector -->
+        <div>
+          <div class="section-title">Stage / Experiment</div>
+          <div class="step-grid">
+            <button class="step-btn" id="btn-mode-wire" onclick="setMode('wire')">1. Straight Wire</button>
+            <button class="step-btn" id="btn-mode-loop" onclick="setMode('loop')">2. Single Loop</button>
+            <button class="step-btn active" id="btn-mode-electromagnet" onclick="setMode('electromagnet')">3. Electromagnet</button>
+          </div>
+        </div>
 
-      <!-- Quick summary card -->
-      <div class="info-card">
-        <strong>The 3 Ways to Strengthen an Electromagnet:</strong><br/>
-        1. <strong>Increase the current</strong> (more batteries or lower resistance)<br/>
-        2. <strong>Add more turns of wire</strong> to the solenoid coil<br/>
-        3. <strong>Insert a soft iron core</strong> inside the coil
-      </div>
-    </div>
-
-    <!-- HUD 1: LIVE COMPASS PROBE READOUT -->
-    <div id="hud-probe">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-        <span style="font-size: 0.74rem; font-weight: 700; color: #f59e0b; display: flex; align-items: center; gap: 4px;">
-          🧭 PLOTTING COMPASS PROBE
-        </span>
-        <span id="probe-status" style="font-size: 0.65rem; background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 1px 5px; border-radius: 4px; font-weight: bold;">
-          Active
-        </span>
-      </div>
-      <div class="probe-row">
-        <span>Magnetic Field Strength |B|:</span>
-        <span id="probe-b-mag" style="color: #38bdf8;">0.00 mT</span>
-      </div>
-      <div class="probe-row">
-        <span>Magnetic Vector (Bx, By, Bz):</span>
-        <span id="probe-b-vec">(0.00, 0.00, 0.00)</span>
-      </div>
-      <div class="probe-row">
-        <span>Distance to Core Axis:</span>
-        <span id="probe-dist">1.70 m</span>
-      </div>
-      <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-        <button class="btn-cam" onclick="moveProbe('north')">Near North</button>
-        <button class="btn-cam" onclick="moveProbe('south')">Near South</button>
-        <button class="btn-cam" onclick="moveProbe('side')">Side Center</button>
-      </div>
-    </div>
-
-    <!-- HUD 2: CAMERA CONTROLS -->
-    <div id="hud-camera">
-      <span style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Camera Angles</span>
-      <div class="cam-btn-group">
-        <button class="btn-cam" onclick="setCameraPreset('perspective')">Perspective</button>
-        <button class="btn-cam" onclick="setCameraPreset('top')">Top View</button>
-        <button class="btn-cam" onclick="setCameraPreset('side')">Side View</button>
-        <button class="btn-cam" onclick="setCameraPreset('reset')">Reset</button>
-      </div>
-    </div>
-
-    <!-- TAB 2: 5 GUIDED PRACTICAL CHALLENGES -->
-    <div id="view-practical" class="tab-view">
-      <div class="tab-content-container">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <!-- Master Switch -->
+        <div class="switch-row">
           <div>
-            <h1 style="font-size: 1.4rem; color: #fff; font-weight: 800;">📋 5-Step Guided Practical: Electromagnet Investigation</h1>
-            <p style="font-size: 0.85rem; color: #94a3b8;">Work through each challenge to discover how electricity and magnetism combine.</p>
+            <div class="switch-label">Circuit Current</div>
+            <div style="font-size: 0.7rem; color: #94a3b8;" id="switch-status-text">Switch is CLOSED</div>
           </div>
-          <button class="btn-action" onclick="switchView('lab')">← Return to 3D Lab</button>
+          <button class="switch-btn on" id="master-switch-btn" onclick="togglePower()">ON (Closed)</button>
         </div>
 
-        <!-- Challenge 1 -->
-        <div class="challenge-card">
-          <div class="challenge-header">
-            <span class="challenge-step">CHALLENGE 1</span>
-            <span style="font-size: 0.75rem; color: #f59e0b;">Foundation Observation</span>
+        <!-- Current Slider -->
+        <div class="control-group">
+          <div class="control-header">
+            <span>Electric Current (I)</span>
+            <span class="control-val" id="val-current">6.0 A</span>
           </div>
-          <h2 class="challenge-title">Oersted’s Evidence: Current Creates a Magnetic Field</h2>
-          <div class="challenge-body">
-            In 1820, Danish scientist Hans Christian Ørsted noticed that when electric current flowed through a wire, nearby magnetic compass needles moved!
-            <div class="action-box">
-              <strong>Your Task in the 3D Simulator:</strong><br/>
-              1. Select <strong>1. Straight Wire</strong> from the apparatus stage.<br/>
-              2. Open the knife switch: notice the magnetic field drops to 0 and the compass aligns to ambient North.<br/>
-              3. Close the knife switch: observe circular magnetic field lines looping around the wire.<br/>
-              4. Click <strong>Reverse Battery</strong>: notice the compass needle flips 180°!
-            </div>
-            <p><strong>Conclusion:</strong> An electric current produces its own magnetic field. When the current direction reverses, the magnetic field also reverses.</p>
+          <input type="range" id="slider-current" min="0" max="15" step="0.5" value="6.0" oninput="updateCurrent(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:#64748b; margin-top:2px;">
+            <span>0 A</span>
+            <span>7.5 A</span>
+            <span>15 A</span>
           </div>
         </div>
 
-        <!-- Challenge 2 -->
-        <div class="challenge-card">
-          <div class="challenge-header">
-            <span class="challenge-step">CHALLENGE 2</span>
-            <span style="font-size: 0.75rem; color: #38bdf8;">Geometry & Field Concentration</span>
+        <!-- Coil Turns Slider (active in electromagnet mode) -->
+        <div class="control-group" id="group-turns">
+          <div class="control-header">
+            <span>Number of Coil Turns (N)</span>
+            <span class="control-val" id="val-turns">30 turns</span>
           </div>
-          <h2 class="challenge-title">The Progression: Straight Wire ➔ Loop ➔ Solenoid</h2>
-          <div class="challenge-body">
-            A straight wire spreads its magnetic field into circles over a wide area, making it relatively weak at any single point.
-            <div class="action-box">
-              <strong>Observe the Shape Transition:</strong><br/>
-              • <strong>Single Loop:</strong> Bending the wire brings the magnetic field lines from all sides together into the center hole, concentrating the field.<br/>
-              • <strong>Solenoid:</strong> Stacking multiple loops side-by-side causes the field inside the coil to become strong, straight, and uniform — exactly like a bar magnet!
-            </div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Conductor Shape</th>
-                  <th>Magnetic Field Pattern</th>
-                  <th>Center Field Strength</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Straight Wire</td>
-                  <td>Concentric circles around wire</td>
-                  <td>Weak (~0.8 mT)</td>
-                </tr>
-                <tr>
-                  <td>Single Loop</td>
-                  <td>Focused through the center ring</td>
-                  <td>Medium (~2.5 mT)</td>
-                </tr>
-                <tr>
-                  <td>Solenoid (12 turns)</td>
-                  <td>Uniform parallel inside; loops outside (like bar magnet)</td>
-                  <td>Strong (~9.5 mT)</td>
-                </tr>
-              </tbody>
-            </table>
+          <input type="range" id="slider-turns" min="5" max="80" step="5" value="30" oninput="updateTurns(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:#64748b; margin-top:2px;">
+            <span>5 turns</span>
+            <span>40 turns</span>
+            <span>80 turns</span>
           </div>
         </div>
 
-        <!-- Challenge 3 -->
-        <div class="challenge-card">
-          <div class="challenge-header">
-            <span class="challenge-step">CHALLENGE 3</span>
-            <span style="font-size: 0.75rem; color: #10b981;">The Electromagnet Discovery</span>
-          </div>
-          <h2 class="challenge-title">The Soft Iron Core Multiplier</h2>
-          <div class="challenge-body">
-            What transforms a solenoid into a true electromagnet? Inserting a magnetic material (like soft iron) into the center of the coil!
-            <div class="action-box">
-              <strong>How it works:</strong><br/>
-              Inside soft iron are tiny regions called <em>magnetic domains</em>. In unmagnetized iron, they point randomly and cancel out. When the coil's current flows, its magnetic field instantly aligns all the domains in the iron, multiplying the total magnetic field up to <strong>80 to 100 times</strong>!
-            </div>
-            <div class="lift-box">
-              <div class="lift-metric">
-                <div class="lift-num" id="demo-staples-none">3</div>
-                <div class="lift-label">Paperclips (Air Core)</div>
-              </div>
-              <div style="font-size: 1.5rem; color: #94a3b8;">➔</div>
-              <div class="lift-metric">
-                <div class="lift-num" style="color: #10b981;" id="demo-staples-iron">36</div>
-                <div class="lift-label">Paperclips (Soft Iron Core)</div>
-              </div>
-            </div>
-            <p><strong>Crucial Concept:</strong> When the electric switch is opened, the soft iron loses its magnetism almost immediately (unlike hard steel, which stays magnetized). This is why electromagnets are used in scrap-yard cranes and electric door locks!</p>
+        <!-- Core Material Selector (active in electromagnet mode) -->
+        <div class="control-group" id="group-core">
+          <div class="section-title">Core Material</div>
+          <div class="core-select-grid">
+            <button class="core-btn active" id="btn-core-iron" onclick="setCore('soft-iron')">Soft Iron (×100)</button>
+            <button class="core-btn" id="btn-core-air" onclick="setCore('air')">Air (Plastic) (×1)</button>
+            <button class="core-btn" id="btn-core-wood" onclick="setCore('wood')">Wood (×1)</button>
           </div>
         </div>
 
-        <!-- Challenge 4 -->
-        <div class="challenge-card">
-          <div class="challenge-header">
-            <span class="challenge-step">CHALLENGE 4</span>
-            <span style="font-size: 0.75rem; color: #f59e0b;">Investigation</span>
-          </div>
-          <h2 class="challenge-title">The 3 Ways to Make an Electromagnet Stronger</h2>
-          <div class="challenge-body">
-            In Year 8 Science, you must know all 3 methods to increase the strength of an electromagnet:
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 12px 0;">
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                <div style="color: #38bdf8; font-weight: 700; margin-bottom: 4px;">1. Increase Current (I)</div>
-                <div style="font-size: 0.8rem; color: #cbd5e1;">More cells in series or higher voltage forces more electrons per second through the wire, generating a stronger magnetic field.</div>
-              </div>
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                <div style="color: #38bdf8; font-weight: 700; margin-bottom: 4px;">2. More Turns of Wire (N)</div>
-                <div style="font-size: 0.8rem; color: #cbd5e1;">Each loop of wire contributes its own magnetic field. Adding more tight turns stacks their fields together.</div>
-              </div>
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                <div style="color: #38bdf8; font-weight: 700; margin-bottom: 4px;">3. Soft Iron Core</div>
-                <div style="font-size: 0.8rem; color: #cbd5e1;">Placing a ferromagnetic core inside concentrates and multiplies magnetic flux dramatically.</div>
-              </div>
-            </div>
+        <!-- Visual Toggles -->
+        <div class="card">
+          <div class="section-title">Display Options</div>
+          <div class="toggles-grid">
+            <label class="toggle-item">
+              <input type="checkbox" id="chk-field-lines" checked onchange="toggleFieldLines(this.checked)">
+              <span>Field Lines (B)</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" id="chk-electrons" checked onchange="toggleElectrons(this.checked)">
+              <span>Electron Flow</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" id="chk-compass" checked onchange="toggleCompass(this.checked)">
+              <span>Magnetic Compass</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" id="chk-clips" checked onchange="toggleClips(this.checked)">
+              <span>Paperclips</span>
+            </label>
           </div>
         </div>
 
-        <!-- Challenge 5 -->
-        <div class="challenge-card">
-          <div class="challenge-header">
-            <span class="challenge-step">CHALLENGE 5</span>
-            <span style="font-size: 0.75rem; color: #ec4899;">Working Scientifically</span>
+        <!-- Paperclip Lift Summary Box -->
+        <div class="lift-box">
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Paperclip Test</div>
+            <div style="font-size: 0.8rem; color: #cbd5e1;">Lifting capacity</div>
           </div>
-          <h2 class="challenge-title">Planning a Fair Test Investigation</h2>
-          <div class="challenge-body">
-            When testing how one variable (e.g. number of turns) affects the strength (number of paperclips picked up), all other variables must be kept strictly controlled!
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Variable Type</th>
-                  <th>In this experiment</th>
-                  <th>How to manage</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>Independent Variable</strong></td>
-                  <td>Number of wire turns (e.g. 10, 20, 30, 40)</td>
-                  <td>Change systematically across test runs</td>
-                </tr>
-                <tr>
-                  <td><strong>Dependent Variable</strong></td>
-                  <td>Strength of the electromagnet</td>
-                  <td>Count the number of paperclips lifted</td>
-                </tr>
-                <tr>
-                  <td><strong>Control Variables</strong></td>
-                  <td>Current, battery voltage, iron core type, paperclip size</td>
-                  <td>Keep identical for every trial!</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="lift-count" id="summary-clips">28</div>
         </div>
+
+        <button onclick="reversePolarity()" style="background:#1e293b; border:1px solid #334155; color:#cbd5e1; padding:0.55rem; border-radius:0.5rem; font-size:0.8rem; font-weight:600; cursor:pointer; width:100%; transition: background 0.15s ease;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#1e293b'">
+          ⇄ Reverse Current Direction
+        </button>
       </div>
     </div>
 
-    <!-- TAB 3: THEORY & LAWS -->
-    <div id="view-theory" class="tab-view">
-      <div class="tab-content-container">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-          <div>
-            <h1 style="font-size: 1.4rem; color: #fff; font-weight: 800;">📖 Year 8 KS3 Science: Electromagnetism Theory</h1>
-            <p style="font-size: 0.85rem; color: #94a3b8;">Key facts, definitions, rules, and everyday applications.</p>
-          </div>
-          <button class="btn-action" onclick="switchView('lab')">← Return to 3D Lab</button>
-        </div>
+    <!-- TAB 2: THEORY & NOTES -->
+    <div id="tab-theory" class="tab-content">
+      <h2>Lesson 3: Electromagnets (KS3 / Year 8 Physics)</h2>
+      <p>An <strong>electromagnet</strong> is a type of magnet in which the magnetic field is produced by an electric current. Unlike permanent bar magnets, electromagnets can be switched on and off instantly!</p>
 
-        <div class="challenge-card">
-          <h2 class="challenge-title">The Right-Hand Grip Rule</h2>
-          <div class="challenge-body">
-            <p>To determine the direction of the magnetic field around a straight current-carrying wire:</p>
-            <div class="action-box">
-              1. Imagine gripping the wire with your <strong>right hand</strong>.<br/>
-              2. Point your <strong>thumb</strong> in the direction of the <strong>conventional current</strong> (positive to negative).<br/>
-              3. Your <strong>curled fingers</strong> point in the direction of the magnetic field lines (North to South loops).
-            </div>
-            <p>For a <strong>solenoid</strong>: Curl your right-hand fingers in the direction of current flowing through the coils, and your extended thumb points toward the <strong>North pole</strong> of the electromagnet!</p>
-          </div>
-        </div>
-
-        <div class="challenge-card">
-          <h2 class="challenge-title">Electromagnet vs Permanent Bar Magnet</h2>
-          <div class="challenge-body">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Feature</th>
-                  <th>Permanent Magnet</th>
-                  <th>Electromagnet</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Can it be switched off?</td>
-                  <td>❌ No (always magnetic)</td>
-                  <td>✅ Yes (switch off current)</td>
-                </tr>
-                <tr>
-                  <td>Can strength be changed?</td>
-                  <td>❌ Fixed</td>
-                  <td>✅ Yes (vary current or turns)</td>
-                </tr>
-                <tr>
-                  <td>Can poles be reversed?</td>
-                  <td>❌ No (fixed North/South)</td>
-                  <td>✅ Yes (reverse battery polarity)</td>
-                </tr>
-                <tr>
-                  <td>Material</td>
-                  <td>Hard magnetic material (e.g. Steel, Neodymium)</td>
-                  <td>Copper wire coil + Soft Iron core</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="challenge-card">
-          <h2 class="challenge-title">Why Soft Iron instead of Steel?</h2>
-          <div class="challenge-body">
-            <p><strong>Soft iron</strong> is magnetically "soft", meaning it magnetizes quickly when current is switched on, and demagnetizes almost immediately when current is cut off.</p>
-            <p style="margin-top: 8px;">If you used <strong>steel</strong> as the core, the domains would stay permanently aligned after turning off the power — turning it into a permanent magnet! A scrap-yard crane made with steel would never be able to drop the metal cars it picks up.</p>
-          </div>
-        </div>
-
-        <div class="challenge-card">
-          <h2 class="challenge-title">Everyday Applications of Electromagnets</h2>
-          <div class="challenge-body">
-            <ul style="padding-left: 20px; line-height: 1.6;">
-              <li><strong>Electric Bells & Buzzers:</strong> An electromagnet pulls a hammer to strike a chime, which breaks the circuit, releasing the hammer in a rapid buzzing cycle.</li>
-              <li><strong>Scrap Yard Cranes:</strong> Giant electromagnets lift scrap cars and containers, then drop them precisely into place when power is cut.</li>
-              <li><strong>Relays & Circuit Breakers:</strong> Allow a small, safe low-voltage switch to turn on a dangerous high-current circuit without physical contact.</li>
-              <li><strong>Maglev Trains:</strong> Powerful electromagnets levitate the train above the track, eliminating friction to achieve speeds over 400 km/h.</li>
-              <li><strong>Electric Motors (Lesson 4):</strong> Interacting magnetic fields produce mechanical rotation to drive electric cars, fans, and washing machines!</li>
-            </ul>
-          </div>
-        </div>
+      <div class="callout">
+        <div class="callout-title">The Three Ways to Strengthen an Electromagnet</div>
+        <p style="margin-bottom:0.4rem;">You can make any electromagnet stronger by:</p>
+        <ol style="margin-left: 1.5rem; color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+          <li><strong>Increasing the Electric Current (I)</strong> — Add more cells/batteries or turn up the power supply.</li>
+          <li><strong>Increasing the Number of Turns (N)</strong> — Wind more tight coils of insulated copper wire around the core.</li>
+          <li><strong>Using a Soft Iron Core</strong> — Soft iron is easily magnetised and concentrates the magnetic flux lines by hundreds of times!</li>
+        </ol>
       </div>
+
+      <h3>Comparison: Permanent Magnets vs Electromagnets</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Permanent Bar Magnet</th>
+            <th>Electromagnet</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Switchable?</strong></td>
+            <td>No, always magnetic</td>
+            <td>Yes! Turn on/off with a switch</td>
+          </tr>
+          <tr>
+            <td><strong>Variable Strength?</strong></td>
+            <td>Fixed strength</td>
+            <td>Adjust current or coil turns</td>
+          </tr>
+          <tr>
+            <td><strong>Reversible Poles?</strong></td>
+            <td>Fixed North and South</td>
+            <td>Reverse current direction to swap poles</td>
+          </tr>
+          <tr>
+            <td><strong>Needs Energy?</strong></td>
+            <td>No external energy needed</td>
+            <td>Requires a continuous electrical current</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Why Soft Iron instead of Steel?</h3>
+      <p>
+        <strong>Soft Iron</strong> is a <em>magnetically soft</em> material. It magnetises quickly when the current is turned on, but demagnetises immediately when the current is turned off.
+        <br><br>
+        If we used <strong>steel</strong> (a <em>magnetically hard</em> material), it would retain its magnetism permanently even after opening the switch, meaning a scrap crane could never drop the cars it picks up!
+      </p>
+
+      <h3>Real-World Applications</h3>
+      <p>
+        • <strong>Scrap-yard cranes:</strong> Powerful electromagnets pick up tons of scrap steel and drop them into crushers simply by switching off the current.<br>
+        • <strong>Electric bells:</strong> The electromagnet repeatedly attracts an iron armature, ringing the gong and breaking the circuit in a cycle.<br>
+        • <strong>Maglev trains:</strong> Electromagnets levitate trains above tracks to eliminate friction and achieve 300+ mph speeds.
+      </p>
     </div>
 
-    <!-- TAB 4: QUICK SELF-CHECK QUIZ -->
-    <div id="view-quiz" class="tab-view">
-      <div class="tab-content-container">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-          <div>
-            <h1 style="font-size: 1.4rem; color: #fff; font-weight: 800;">❓ Year 8 Electromagnetism Quiz</h1>
-            <p style="font-size: 0.85rem; color: #94a3b8;">Test your knowledge! Get instant feedback on all 5 questions.</p>
-          </div>
-          <button class="btn-action" onclick="switchView('lab')">← Return to 3D Lab</button>
-        </div>
+    <!-- TAB 3: SELF-CHECK QUIZ -->
+    <div id="tab-quiz" class="tab-content">
+      <h2>Year 8 Science Self-Check Quiz</h2>
+      <p>Test your understanding of Lesson 3! Choose the best answer for each question:</p>
 
-        <!-- Question 1 -->
-        <div class="quiz-question" id="q1">
-          <div class="quiz-title">1. What did Hans Christian Ørsted discover when he placed a compass near an electric circuit?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" onclick="checkAnswer('q1', 0, false)">A. Electricity generates heat that melts the compass needle</button>
-            <button class="quiz-option" onclick="checkAnswer('q1', 1, true)">B. An electric current in a wire produces its own magnetic field</button>
-            <button class="quiz-option" onclick="checkAnswer('q1', 2, false)">C. Compasses only point towards copper metal</button>
-            <button class="quiz-option" onclick="checkAnswer('q1', 3, false)">D. Electricity destroys magnetism permanently</button>
-          </div>
-          <div class="quiz-feedback" id="q1-fb"></div>
+      <!-- Q1 -->
+      <div class="quiz-card" id="q1">
+        <div class="quiz-q">1. What happens to an electromagnet when the electric current is switched off?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="checkQuiz(1, 0, false, 'Permanent magnets remain magnetic, but soft iron electromagnets lose their field immediately.')">A) It stays permanently magnetic</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(1, 1, true, 'Correct! The magnetic field disappears the instant current stops flowing.')">B) Its magnetic field turns off completely</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(1, 2, false, 'The poles do not reverse when turned off; reversing poles requires reversing current direction.')">C) Its North and South poles swap</button>
         </div>
+        <div class="quiz-feedback" id="q1-fb"></div>
+      </div>
 
-        <!-- Question 2 -->
-        <div class="quiz-question" id="q2">
-          <div class="quiz-title">2. Which of the following is NOT one of the 3 ways to make an electromagnet stronger?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" onclick="checkAnswer('q2', 0, false)">A. Increasing the electric current with more batteries</button>
-            <button class="quiz-option" onclick="checkAnswer('q2', 1, false)">B. Adding more turns of wire to the solenoid</button>
-            <button class="quiz-option" onclick="checkAnswer('q2', 2, true)">C. Painting the coil bright red</button>
-            <button class="quiz-option" onclick="checkAnswer('q2', 3, false)">D. Inserting a soft iron core inside the coil</button>
-          </div>
-          <div class="quiz-feedback" id="q2-fb"></div>
+      <!-- Q2 -->
+      <div class="quiz-card" id="q2">
+        <div class="quiz-q">2. Which core material provides the strongest magnetic field in an electromagnet?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="checkQuiz(2, 0, false, 'Wood and plastic are non-magnetic insulators and do not multiply the magnetic field.')">A) Wooden dowel</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(2, 1, true, 'Spot on! Soft iron concentrates magnetic flux by over 100 times.')">B) Soft iron nail</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(2, 2, false, 'Copper is a good electrical conductor, but is not ferromagnetic and will not amplify the magnetic field.')">C) Solid copper bar</button>
         </div>
+        <div class="quiz-feedback" id="q2-fb"></div>
+      </div>
 
-        <!-- Question 3 -->
-        <div class="quiz-question" id="q3">
-          <div class="quiz-title">3. Why is soft iron used for the core of an electromagnet instead of steel?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" onclick="checkAnswer('q3', 0, true)">A. Soft iron magnetizes quickly and loses its magnetism as soon as the power is cut</button>
-            <button class="quiz-option" onclick="checkAnswer('q3', 1, false)">B. Soft iron is much lighter than plastic</button>
-            <button class="quiz-option" onclick="checkAnswer('q3', 2, false)">C. Steel cannot be magnetized at all</button>
-            <button class="quiz-option" onclick="checkAnswer('q3', 3, false)">D. Soft iron conducts electricity better than pure copper</button>
-          </div>
-          <div class="quiz-feedback" id="q3-fb"></div>
+      <!-- Q3 -->
+      <div class="quiz-card" id="q3">
+        <div class="quiz-q">3. A student winds 20 turns of wire around a nail and lifts 4 paperclips. How could they lift MORE paperclips?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="checkQuiz(3, 0, false, 'Decreasing current lowers the magnetic field strength.')">A) Decrease current from 3A to 1A</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(3, 1, true, 'Correct! Increasing wire turns increases total magnetic field strength.')">B) Increase turns from 20 turns to 50 turns</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(3, 2, false, 'Plastic is not magnetic and would drastically weaken the electromagnet.')">C) Replace the iron nail with a plastic rod</button>
         </div>
+        <div class="quiz-feedback" id="q3-fb"></div>
+      </div>
 
-        <!-- Question 4 -->
-        <div class="quiz-question" id="q4">
-          <div class="quiz-title">4. What happens to the magnetic poles of an electromagnet when you reverse the battery terminals?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" onclick="checkAnswer('q4', 0, false)">A. The magnetic field disappears completely</button>
-            <button class="quiz-option" onclick="checkAnswer('q4', 1, false)">B. Both ends become North poles</button>
-            <button class="quiz-option" onclick="checkAnswer('q4', 2, true)">C. The North and South poles swap positions</button>
-            <button class="quiz-option" onclick="checkAnswer('q4', 3, false)">D. The strength of the magnet doubles</button>
-          </div>
-          <div class="quiz-feedback" id="q4-fb"></div>
+      <!-- Q4 -->
+      <div class="quiz-card" id="q4">
+        <div class="quiz-q">4. Why is soft iron preferred over hard steel for a scrap-yard lifting crane?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="checkQuiz(4, 0, true, 'Exactly! Soft iron demagnetises instantly so the crane operator can drop the scrap metal.')">A) Soft iron loses its magnetism immediately when turned off</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(4, 1, false, 'Steel actually retains permanent magnetism, which is what we want to avoid in a crane.')">B) Steel loses magnetism faster than iron</button>
+          <button class="quiz-opt-btn" onclick="checkQuiz(4, 2, false, 'Iron is actually heavier and denser than most light alloys.')">C) Iron is much lighter than steel</button>
         </div>
-
-        <!-- Question 5 -->
-        <div class="quiz-question" id="q5">
-          <div class="quiz-title">5. In a fair investigation testing how the number of turns affects electromagnet strength, which variable is the DEPENDENT variable?</div>
-          <div class="quiz-options">
-            <button class="quiz-option" onclick="checkAnswer('q5', 0, false)">A. The number of wire turns wound on the nail</button>
-            <button class="quiz-option" onclick="checkAnswer('q5', 1, true)">B. The number of paperclips lifted by the magnet</button>
-            <button class="quiz-option" onclick="checkAnswer('q5', 2, false)">C. The voltage of the battery</button>
-            <button class="quiz-option" onclick="checkAnswer('q5', 3, false)">D. The thickness of the iron core</button>
-          </div>
-          <div class="quiz-feedback" id="q5-fb"></div>
-        </div>
-
-        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; text-align: center;">
-          <span style="font-size: 0.95rem; font-weight: 700; color: #f8fafc;" id="quiz-score-text">Answer the questions above to test your score!</span>
-        </div>
+        <div class="quiz-feedback" id="q4-fb"></div>
       </div>
     </div>
   </main>
 
-  <!-- STANDALONE THREE.JS SIMULATION SCRIPT -->
+  <!-- Simulation Logic & Three.js Engine -->
   <script>
-    // State configuration
-    const config = {
-      mode: 'electromagnet', // 'wire', 'coil', 'solenoid', 'electromagnet'
+    // State
+    const state = {
+      mode: 'electromagnet', // 'wire' | 'loop' | 'electromagnet'
+      power: true,
       current: 6.0,
-      coilRadius: 1.5,
-      solenoidLength: 3.5,
-      solenoidTurns: 12,
-      hasIronCore: true,
+      turns: 30,
+      core: 'soft-iron',
+      reversed: false,
       showFieldLines: true,
-      showParticles: true,
+      showElectrons: true,
       showCompass: true,
-      switchClosed: true,
-      particleType: 'electrons', // 'electrons' or 'conventional'
-      cellCount: 1,
-      probePos: new THREE.Vector3(1.8, -0.6, 1.8)
+      showClips: true
     };
 
-    // Initialize Three.js Scene
-    const container = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / (window.innerHeight - 52), 0.1, 100);
-    camera.position.set(6.5, 5.5, 9.5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(window.innerWidth, window.innerHeight - 52);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxDistance = 30;
-    controls.minDistance = 2;
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-    scene.add(ambientLight);
-
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    keyLight.position.set(10, 18, 12);
-    scene.add(keyLight);
-
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.7);
-    fillLight.position.set(-10, -6, -10);
-    scene.add(fillLight);
-
-    // Groups
-    const circuitGroup = new THREE.Group();
-    scene.add(circuitGroup);
-
-    const conductorGroup = new THREE.Group();
-    scene.add(conductorGroup);
-
-    const fieldLinesGroup = new THREE.Group();
-    scene.add(fieldLinesGroup);
-
-    const particlesGroup = new THREE.Group();
-    scene.add(particlesGroup);
-
-    const polesGroup = new THREE.Group();
-    scene.add(polesGroup);
-
-    // Soft Iron Core Mesh
-    const ironCoreMesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.15, 1.15, 4.2, 32),
-      new THREE.MeshStandardMaterial({
-        color: 0x475569,
-        metalness: 0.85,
-        roughness: 0.3
-      })
-    );
-    scene.add(ironCoreMesh);
-    ironCoreMesh.visible = config.hasIronCore;
-
-    // Lab Baseboard
-    const baseboard = new THREE.Mesh(
-      new THREE.BoxGeometry(13.0, 0.18, 9.5),
-      new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.8, metalness: 0.15 })
-    );
-    baseboard.position.set(0, -3.2, 0);
-    scene.add(baseboard);
-
-    const grid = new THREE.GridHelper(13, 13, 0x1e293b, 0x0f172a);
-    grid.position.y = -3.1;
-    scene.add(grid);
-
-    // Compass Probe Mesh
-    const compassGroup = new THREE.Group();
-    const needleGeom = new THREE.ConeGeometry(0.14, 0.75, 16);
-    const northCone = new THREE.Mesh(needleGeom, new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.3, roughness: 0.4 }));
-    northCone.position.y = 0.375;
-    const southCone = new THREE.Mesh(needleGeom, new THREE.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.3, roughness: 0.4 }));
-    southCone.position.y = -0.375;
-    southCone.rotation.x = Math.PI;
-    const pivotSphere = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9 }));
-    
-    // Compass housing glass ring
-    const compassRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.85, 0.04, 16, 32),
-      new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 })
-    );
-    compassRing.rotation.x = Math.PI * 0.5;
-
-    compassGroup.add(northCone);
-    compassGroup.add(southCone);
-    compassGroup.add(pivotSphere);
-    compassGroup.add(compassRing);
-    scene.add(compassGroup);
-    compassGroup.position.copy(config.probePos);
-
-    // Switch Blade Reference
-    let switchBladeGroup = null;
-
-    // Realistic Battery Factory
-    function createBatteryModel(reversed) {
-      const batGroup = new THREE.Group();
-      // Main Body
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.55, 0.55, 1.6, 32),
-        new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.4, metalness: 0.6 })
-      );
-      body.rotation.z = Math.PI * 0.5;
-      batGroup.add(body);
-
-      // Gold Casing Sleeve
-      const goldSleeve = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.552, 0.552, 0.65, 32),
-        new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.85 })
-      );
-      goldSleeve.rotation.z = Math.PI * 0.5;
-      goldSleeve.position.x = 0.45;
-      batGroup.add(goldSleeve);
-
-      // Positive Raised Terminal
-      const posPip = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.2, 0.2, 0.25, 24),
-        new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.2, metalness: 0.95 })
-      );
-      posPip.rotation.z = Math.PI * 0.5;
-      posPip.position.x = 0.9;
-      batGroup.add(posPip);
-
-      // Negative Flat Plate
-      const negBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.53, 0.53, 0.08, 32),
-        new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.2, metalness: 0.9 })
-      );
-      negBase.rotation.z = Math.PI * 0.5;
-      negBase.position.x = -0.82;
-      batGroup.add(negBase);
-
-      if (reversed) {
-        batGroup.rotation.y = Math.PI;
-      }
-      return batGroup;
-    }
-
-    // Knife Switch Factory
-    function createKnifeSwitch() {
-      const swGroup = new THREE.Group();
-      // Wooden block base
-      const swBase = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.16, 1.8),
-        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 })
-      );
-      swGroup.add(swBase);
-
-      const brassMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.25 });
-      const hingePost = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.35, 16), brassMat);
-      hingePost.position.set(0, 0.2, -0.6);
-      swGroup.add(hingePost);
-
-      const contactPost = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.35, 16), brassMat);
-      contactPost.position.set(0, 0.2, 0.6);
-      swGroup.add(contactPost);
-
-      // Knife Blade Pivot
-      switchBladeGroup = new THREE.Group();
-      switchBladeGroup.position.set(0, 0.28, -0.6);
-
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 1.25), brassMat);
-      blade.position.set(0, 0.05, 0.6);
-      switchBladeGroup.add(blade);
-
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 0.45, 16),
-        new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.5 })
-      );
-      handle.position.set(0, 0.22, 1.15);
-      switchBladeGroup.add(handle);
-
-      swGroup.add(switchBladeGroup);
-      return swGroup;
-    }
-
-    // Circuit Polyline Loop
-    let circuitLoopPath = [];
-
-    function rebuildCircuit() {
-      while (circuitGroup.children.length > 0) {
-        circuitGroup.remove(circuitGroup.children[0]);
-      }
-
-      const isReversed = config.current < 0;
-      const bat1 = createBatteryModel(isReversed);
-      bat1.position.set(3.4, -2.95, 1.8);
-      circuitGroup.add(bat1);
-
-      if (config.cellCount > 1) {
-        const bat2 = createBatteryModel(isReversed);
-        bat2.position.set(3.4, -2.95, 3.6);
-        circuitGroup.add(bat2);
-      }
-
-      const knifeSwitch = createKnifeSwitch();
-      knifeSwitch.position.set(-3.4, -3.05, 1.8);
-      circuitGroup.add(knifeSwitch);
-
-      if (switchBladeGroup) {
-        switchBladeGroup.rotation.x = config.switchClosed ? 0 : -0.75;
-      }
-
-      // Connecting Jumper Wires
-      const wireMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.85, roughness: 0.3 });
-      const wireCurves = [
-        [new THREE.Vector3(4.3, -2.95, 1.8), new THREE.Vector3(4.5, -3.0, -1.8), new THREE.Vector3(1.2, -3.0, -2.5)],
-        [new THREE.Vector3(-3.4, -2.9, 2.4), new THREE.Vector3(-4.2, -3.0, 2.2), new THREE.Vector3(2.5, -3.0, 1.8)],
-        [new THREE.Vector3(-3.4, -2.9, 1.2), new THREE.Vector3(-3.8, -3.0, -1.5), new THREE.Vector3(-1.2, -3.0, -2.5)],
-      ];
-
-      wireCurves.forEach(pts => {
-        const c = new THREE.CatmullRomCurve3(pts);
-        const tube = new THREE.Mesh(new THREE.TubeGeometry(c, 24, 0.05, 8, false), wireMat);
-        circuitGroup.add(tube);
-      });
-
-      circuitLoopPath = [
-        new THREE.Vector3(2.5, -3.0, 1.8),
-        new THREE.Vector3(-1.0, -3.0, 2.0),
-        new THREE.Vector3(-3.4, -2.9, 2.4),
-        new THREE.Vector3(-3.4, -2.9, 1.2),
-        new THREE.Vector3(-3.8, -3.0, -1.5),
-        new THREE.Vector3(-1.2, -3.0, -2.5),
-        new THREE.Vector3(0, -1.8, 0),
-        new THREE.Vector3(0, 1.8, 0),
-        new THREE.Vector3(1.2, -3.0, -2.5),
-        new THREE.Vector3(4.5, -3.0, -1.8),
-        new THREE.Vector3(4.3, -2.95, 1.8),
-        new THREE.Vector3(3.4, -2.95, 1.8),
-        new THREE.Vector3(2.5, -3.0, 1.8),
-      ];
-    }
-
-    // Particle Animation System
-    const particles = [];
-    const PARTICLE_COUNT = 70;
-
-    function initParticles() {
-      while (particlesGroup.children.length > 0) {
-        particlesGroup.remove(particlesGroup.children[0]);
-      }
-      particles.length = 0;
-
-      const isElectron = config.particleType === 'electrons';
-      const pColor = isElectron ? 0x38bdf8 : 0xfacc15;
-      const geom = new THREE.SphereGeometry(isElectron ? 0.07 : 0.085, 12, 12);
-      const mat = new THREE.MeshBasicMaterial({ color: pColor });
-
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const mesh = new THREE.Mesh(geom, mat);
-        particlesGroup.add(mesh);
-        particles.push({
-          mesh,
-          progress: i / PARTICLE_COUNT,
-          speed: 0.16 + Math.random() * 0.04
-        });
-      }
-    }
-
-    function updateParticles(delta) {
-      if (!config.showParticles || circuitLoopPath.length < 2) {
-        particlesGroup.visible = false;
-        return;
-      }
-      particlesGroup.visible = true;
-
-      const isFlowing = config.switchClosed && Math.abs(config.current) > 0.05;
-      const isElectron = config.particleType === 'electrons';
-      const dir = (isElectron ? 1 : -1) * Math.sign(config.current);
-      const nSegments = circuitLoopPath.length - 1;
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        if (isFlowing) {
-          p.progress += dir * p.speed * delta;
-          if (p.progress > 1.0) p.progress -= 1.0;
-          if (p.progress < 0.0) p.progress += 1.0;
-
-          const floatIdx = p.progress * nSegments;
-          const idx = Math.floor(floatIdx);
-          const alpha = floatIdx - idx;
-          const p1 = circuitLoopPath[Math.min(idx, nSegments)];
-          const p2 = circuitLoopPath[Math.min(idx + 1, nSegments)];
-          p.mesh.position.lerpVectors(p1, p2, alpha);
-        } else {
-          // Switch open: thermal Brownian vibration with zero net flow!
-          const floatIdx = p.progress * nSegments;
-          const idx = Math.floor(floatIdx);
-          const alpha = floatIdx - idx;
-          const p1 = circuitLoopPath[Math.min(idx, nSegments)];
-          const p2 = circuitLoopPath[Math.min(idx + 1, nSegments)];
-          p.mesh.position.lerpVectors(p1, p2, alpha);
-          p.mesh.position.x += (Math.random() - 0.5) * 0.02;
-          p.mesh.position.y += (Math.random() - 0.5) * 0.02;
-          p.mesh.position.z += (Math.random() - 0.5) * 0.02;
-        }
-      }
-    }
-
-    // Biot-Savart Numerical Solver
-    function getSegments() {
-      const segs = [];
-      const { mode, coilRadius, solenoidLength, solenoidTurns } = config;
-      if (mode === 'wire') {
-        const halfL = 6.0;
-        const n = 60;
-        for (let i = 0; i < n; i++) {
-          const y1 = -halfL + (i / n) * (2 * halfL);
-          const y2 = -halfL + ((i + 1) / n) * (2 * halfL);
-          const p = new THREE.Vector3(0, (y1 + y2) * 0.5, 0);
-          const dl = new THREE.Vector3(0, y2 - y1, 0);
-          segs.push({ p, dl });
-        }
-      } else if (mode === 'coil') {
-        const n = 72;
-        for (let i = 0; i < n; i++) {
-          const a1 = (i / n) * Math.PI * 2;
-          const a2 = ((i + 1) / n) * Math.PI * 2;
-          const p1 = new THREE.Vector3(coilRadius * Math.cos(a1), 0, coilRadius * Math.sin(a1));
-          const p2 = new THREE.Vector3(coilRadius * Math.cos(a2), 0, coilRadius * Math.sin(a2));
-          segs.push({ p: new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5), dl: new THREE.Vector3().subVectors(p2, p1) });
-        }
-      } else {
-        const n = Math.round(solenoidTurns * 24);
-        for (let i = 0; i < n; i++) {
-          const t1 = i / n;
-          const t2 = (i + 1) / n;
-          const a1 = t1 * solenoidTurns * Math.PI * 2;
-          const a2 = t2 * solenoidTurns * Math.PI * 2;
-          const y1 = -solenoidLength * 0.5 + t1 * solenoidLength;
-          const y2 = -solenoidLength * 0.5 + t2 * solenoidLength;
-          const p1 = new THREE.Vector3(coilRadius * Math.cos(a1), y1, coilRadius * Math.sin(a1));
-          const p2 = new THREE.Vector3(coilRadius * Math.cos(a2), y2, coilRadius * Math.sin(a2));
-          segs.push({ p: new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5), dl: new THREE.Vector3().subVectors(p2, p1) });
-        }
-      }
-      return segs;
-    }
-
-    function calculateB(r, segs) {
-      const B = new THREE.Vector3(0, 0, 0);
-      if (!config.switchClosed) return B;
-      const I = config.current;
-      if (Math.abs(I) < 1e-4) return B;
-
-      if (config.mode === 'wire') {
-        const rho = Math.sqrt(r.x * r.x + r.z * r.z);
-        if (rho < 1e-4) return B;
-        const mag = (2.0 * I) / Math.max(0.15, rho);
-        return new THREE.Vector3(-r.z / rho, 0, r.x / rho).multiplyScalar(mag);
-      }
-
-      const rMinusP = new THREE.Vector3();
-      const cross = new THREE.Vector3();
-      for (let i = 0; i < segs.length; i++) {
-        rMinusP.subVectors(r, segs[i].p);
-        const distSq = rMinusP.lengthSq() + 0.05;
-        cross.crossVectors(segs[i].dl, rMinusP).multiplyScalar((2.0 * I) / (distSq * Math.sqrt(distSq)));
-        B.add(cross);
-      }
-
-      // Soft Iron Permeability multiplier
-      if (config.hasIronCore && (config.mode === 'solenoid' || config.mode === 'electromagnet')) {
-        const rho = Math.sqrt(r.x * r.x + r.z * r.z);
-        if (Math.abs(r.y) <= config.solenoidLength * 0.6 && rho <= config.coilRadius * 0.95) {
-          B.multiplyScalar(15.0);
-        } else {
-          B.multiplyScalar(3.5);
-        }
-      }
-      return B;
-    }
-
-    // Conductor 3D Mesh
-    function rebuildConductor() {
-      while (conductorGroup.children.length > 0) {
-        conductorGroup.remove(conductorGroup.children[0]);
-      }
-      const copperMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.85, roughness: 0.25 });
-      const { mode, coilRadius, solenoidLength, solenoidTurns } = config;
-
-      if (mode === 'wire') {
-        const wireGeom = new THREE.CylinderGeometry(0.12, 0.12, 12, 32);
-        const wire = new THREE.Mesh(wireGeom, copperMat);
-        conductorGroup.add(wire);
-      } else if (mode === 'coil') {
-        const torusGeom = new THREE.TorusGeometry(coilRadius, 0.11, 24, 64);
-        torusGeom.rotateX(Math.PI * 0.5);
-        const torus = new THREE.Mesh(torusGeom, copperMat);
-        conductorGroup.add(torus);
-      } else {
-        const curvePoints = [];
-        const n = solenoidTurns * 32;
-        for (let i = 0; i <= n; i++) {
-          const t = i / n;
-          const a = t * solenoidTurns * Math.PI * 2;
-          const y = -solenoidLength * 0.5 + t * solenoidLength;
-          curvePoints.push(new THREE.Vector3(coilRadius * Math.cos(a), y, coilRadius * Math.sin(a)));
-        }
-        const curve = new THREE.CatmullRomCurve3(curvePoints);
-        const tubeGeom = new THREE.TubeGeometry(curve, n, 0.09, 12, false);
-        const tube = new THREE.Mesh(tubeGeom, copperMat);
-        conductorGroup.add(tube);
-      }
-
-      // Rebuild North/South poles tags
-      rebuildPolesIndicators();
-    }
-
-    function rebuildPolesIndicators() {
-      while (polesGroup.children.length > 0) {
-        polesGroup.remove(polesGroup.children[0]);
-      }
-
-      if (!config.switchClosed || config.mode === 'wire' || Math.abs(config.current) < 0.1) return;
-
-      const isNorthTop = config.current > 0;
-      const topColor = isNorthTop ? 0xef4444 : 0x3b82f6;
-      const botColor = isNorthTop ? 0x3b82f6 : 0xef4444;
-
-      const topDisc = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.2, 1.2, 0.1, 32),
-        new THREE.MeshBasicMaterial({ color: topColor, transparent: true, opacity: 0.6 })
-      );
-      topDisc.position.y = config.solenoidLength * 0.5 + 0.2;
-      polesGroup.add(topDisc);
-
-      const botDisc = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.2, 1.2, 0.1, 32),
-        new THREE.MeshBasicMaterial({ color: botColor, transparent: true, opacity: 0.6 })
-      );
-      botDisc.position.y = -config.solenoidLength * 0.5 - 0.2;
-      polesGroup.add(botDisc);
-    }
-
-    // Field Lines Generator
-    function rebuildFieldLines() {
-      while (fieldLinesGroup.children.length > 0) {
-        fieldLinesGroup.remove(fieldLinesGroup.children[0]);
-      }
-      if (!config.showFieldLines || !config.switchClosed || Math.abs(config.current) < 1e-4) return;
-
-      const segs = getSegments();
-      const seeds = [];
-      const { mode, coilRadius } = config;
-
-      if (mode === 'wire') {
-        const radii = [0.8, 1.5, 2.4, 3.6];
-        const heights = [-2.0, 0.0, 2.0];
-        heights.forEach(h => {
-          radii.forEach(r => {
-            const circle = [];
-            const pts = 50;
-            const dir = Math.sign(config.current);
-            for (let i = 0; i <= pts; i++) {
-              const a = dir * (i / pts) * Math.PI * 2;
-              circle.push(new THREE.Vector3(r * Math.cos(a), h, r * Math.sin(a)));
-            }
-            const geom = new THREE.BufferGeometry().setFromPoints(circle);
-            const mat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 });
-            fieldLinesGroup.add(new THREE.Line(geom, mat));
-          });
-        });
-        return;
-      }
-
-      // Loop & Solenoid field line streamers
-      const rFractions = mode === 'coil' ? [0.2, 0.5, 0.8, 1.6, 2.4] : [0.0, 0.3, 0.6, 0.85, 1.8, 2.8];
-      rFractions.forEach(rf => {
-        const numA = rf === 0 ? 1 : 4;
-        for (let a = 0; a < numA; a++) {
-          const ang = a * (Math.PI * 2 / numA);
-          seeds.push(new THREE.Vector3(coilRadius * rf * Math.cos(ang), 0, coilRadius * rf * Math.sin(ang)));
-        }
-      });
-
-      seeds.forEach(seed => {
-        const pts = [];
-        let curr = seed.clone();
-        for (let step = 0; step < 180; step++) {
-          pts.push(curr.clone());
-          const B = calculateB(curr, segs);
-          if (B.lengthSq() < 1e-6) break;
-          B.normalize().multiplyScalar(0.09);
-          curr.add(B);
-          if (curr.length() > 8.0) break;
-          if (step > 20 && curr.distanceTo(seed) < 0.16) {
-            pts.push(seed.clone());
-            break;
-          }
-        }
-        if (pts.length > 5) {
-          const geom = new THREE.BufferGeometry().setFromPoints(pts);
-          const mat = new THREE.LineBasicMaterial({
-            color: config.hasIronCore ? 0xf59e0b : 0x38bdf8,
-            transparent: true,
-            opacity: 0.85
-          });
-          fieldLinesGroup.add(new THREE.Line(geom, mat));
-        }
-      });
-    }
-
-    // Compass Probe Update
-    function updateCompassProbe() {
-      const segs = getSegments();
-      const B = calculateB(config.probePos, segs);
-      const mag = B.length();
-
-      document.getElementById('probe-b-mag').innerText = (mag * 10).toFixed(2) + ' mT';
-      document.getElementById('probe-b-vec').innerText = '(' + (B.x * 10).toFixed(1) + ', ' + (B.y * 10).toFixed(1) + ', ' + (B.z * 10).toFixed(1) + ')';
-      
-      const dist = Math.sqrt(config.probePos.x * config.probePos.x + config.probePos.z * config.probePos.z);
-      document.getElementById('probe-dist').innerText = dist.toFixed(2) + ' m';
-
-      if (mag > 1e-4) {
-        const dir = B.clone().normalize();
-        const targetQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-        compassGroup.quaternion.slerp(targetQ, 0.15);
-      } else {
-        // Point north along Z-axis when field is absent
-        const ambientNorth = new THREE.Vector3(0, 0, -1);
-        const targetQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), ambientNorth);
-        compassGroup.quaternion.slerp(targetQ, 0.08);
-      }
-    }
-
-    // Interaction Functions
-    window.setApparatusMode = function(m) {
-      config.mode = m;
-      if (m === 'electromagnet') {
-        config.hasIronCore = true;
-      } else if (m !== 'solenoid') {
-        config.hasIronCore = false;
-      }
-
-      document.querySelectorAll('.btn-opt').forEach(b => {
-        if (['btn-wire', 'btn-coil', 'btn-solenoid', 'btn-electromagnet'].includes(b.id)) {
-          b.classList.remove('active');
-        }
-      });
-      const activeBtn = document.getElementById('btn-' + m);
+    // Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
       if (activeBtn) activeBtn.classList.add('active');
 
-      const isSolenoid = (m === 'solenoid' || m === 'electromagnet');
-      document.getElementById('solenoid-controls-group').style.display = isSolenoid ? 'block' : 'none';
-      document.getElementById('check-core').checked = config.hasIronCore;
-      ironCoreMesh.visible = config.hasIronCore;
+      document.getElementById('tab-simulator').style.display = tabId === 'simulator' ? 'flex' : 'none';
+      document.getElementById('tab-theory').classList.toggle('active', tabId === 'theory');
+      document.getElementById('tab-quiz').classList.toggle('active', tabId === 'quiz');
 
-      rebuildConductor();
-      rebuildFieldLines();
-    };
+      if (tabId === 'simulator') {
+        onWindowResize();
+      }
+    }
 
-    window.toggleKnifeSwitch = function() {
-      config.switchClosed = !config.switchClosed;
-      const btn = document.getElementById('btn-switch-state');
-      const topBtn = document.getElementById('btn-top-switch');
-      
-      if (config.switchClosed) {
-        btn.classList.add('btn-switch-active');
-        btn.innerText = '⚡ Knife Switch: CLOSED';
-        topBtn.innerText = '⚡ Switch: CLOSED';
-        topBtn.style.color = '#10b981';
+    // UI Updates
+    function updateCurrent(val) {
+      state.current = parseFloat(val);
+      document.getElementById('val-current').textContent = state.current.toFixed(1) + ' A';
+      recalcPhysics();
+    }
+
+    function updateTurns(val) {
+      state.turns = parseInt(val, 10);
+      document.getElementById('val-turns').textContent = state.turns + ' turns';
+      rebuild3DScene();
+      recalcPhysics();
+    }
+
+    function togglePower() {
+      state.power = !state.power;
+      const btn = document.getElementById('master-switch-btn');
+      const text = document.getElementById('switch-status-text');
+      if (state.power) {
+        btn.textContent = 'ON (Closed)';
+        btn.className = 'switch-btn on';
+        text.textContent = 'Switch is CLOSED';
       } else {
-        btn.classList.remove('btn-switch-active');
-        btn.innerText = '⚡ Knife Switch: OPEN';
-        topBtn.innerText = '⚡ Switch: OPEN';
-        topBtn.style.color = '#ef4444';
+        btn.textContent = 'OFF (Open)';
+        btn.className = 'switch-btn off';
+        text.textContent = 'Switch is OPEN';
       }
+      recalcPhysics();
+    }
 
-      if (switchBladeGroup) {
-        switchBladeGroup.rotation.x = config.switchClosed ? 0 : -0.75;
-      }
+    function setMode(newMode) {
+      state.mode = newMode;
+      document.getElementById('btn-mode-wire').classList.toggle('active', newMode === 'wire');
+      document.getElementById('btn-mode-loop').classList.toggle('active', newMode === 'loop');
+      document.getElementById('btn-mode-electromagnet').classList.toggle('active', newMode === 'electromagnet');
 
-      rebuildFieldLines();
-      rebuildPolesIndicators();
-    };
+      document.getElementById('group-turns').style.display = newMode === 'electromagnet' ? 'block' : 'none';
+      document.getElementById('group-core').style.display = newMode === 'electromagnet' ? 'block' : 'none';
 
-    window.reverseBatteryPolarity = function() {
-      config.current = -config.current;
-      const isReversed = config.current < 0;
-      
-      const btn = document.getElementById('btn-polarity-state');
-      btn.innerText = isReversed ? '🔄 Polarity: (− ➔ +)' : '🔄 Polarity: (+ ➔ −)';
-      
-      document.getElementById('slider-current').value = config.current;
-      document.getElementById('label-current').innerText = config.current.toFixed(1) + ' A';
+      rebuild3DScene();
+      recalcPhysics();
+    }
 
-      rebuildCircuit();
-      rebuildFieldLines();
-      rebuildPolesIndicators();
-    };
+    function setCore(coreType) {
+      state.core = coreType;
+      document.getElementById('btn-core-iron').classList.toggle('active', coreType === 'soft-iron');
+      document.getElementById('btn-core-air').classList.toggle('active', coreType === 'air');
+      document.getElementById('btn-core-wood').classList.toggle('active', coreType === 'wood');
 
-    window.cycleCells = function() {
-      config.cellCount = (config.cellCount % 3) + 1;
-      const voltages = { 1: '1.5V', 2: '3.0V', 3: '4.5V' };
-      document.getElementById('btn-cells').innerText = '🔋 ' + config.cellCount + '× D-Cells (' + voltages[config.cellCount] + ')';
-      
-      const baseI = 6.0 * (config.cellCount / 1.0);
-      config.current = Math.sign(config.current || 1) * baseI;
-      document.getElementById('slider-current').value = config.current;
-      document.getElementById('label-current').innerText = config.current.toFixed(1) + ' A';
+      rebuild3DScene();
+      recalcPhysics();
+    }
 
-      rebuildCircuit();
-      rebuildFieldLines();
-      rebuildPolesIndicators();
-    };
+    function reversePolarity() {
+      state.reversed = !state.reversed;
+      recalcPhysics();
+    }
 
-    window.toggleParticleMode = function() {
-      config.particleType = config.particleType === 'electrons' ? 'conventional' : 'electrons';
-      const btn = document.getElementById('btn-particle-mode');
-      btn.innerText = config.particleType === 'electrons' ? '⚛ Electrons (e⁻)' : '🔀 Conventional (I)';
-      initParticles();
-    };
+    function toggleFieldLines(show) {
+      state.showFieldLines = show;
+      if (fieldLinesGroup) fieldLinesGroup.visible = show;
+    }
 
-    window.onCurrentSlider = function(val) {
-      config.current = parseFloat(val);
-      document.getElementById('label-current').innerText = config.current.toFixed(1) + ' A';
-      rebuildFieldLines();
-      rebuildPolesIndicators();
-    };
+    function toggleElectrons(show) {
+      state.showElectrons = show;
+      if (electronGroup) electronGroup.visible = show;
+    }
 
-    window.onTurnsSlider = function(val) {
-      config.solenoidTurns = parseInt(val);
-      document.getElementById('label-turns').innerText = val + ' turns';
-      rebuildConductor();
-      rebuildFieldLines();
-    };
+    function toggleCompass(show) {
+      state.showCompass = show;
+      if (compassGroup) compassGroup.visible = show;
+    }
 
-    window.onCoreToggle = function(checked) {
-      config.hasIronCore = checked;
-      ironCoreMesh.visible = checked;
-      rebuildFieldLines();
-    };
-
-    window.toggleFieldLines = function(checked) {
-      config.showFieldLines = checked;
-      fieldLinesGroup.visible = checked;
-      rebuildFieldLines();
-    };
-
-    window.toggleParticles = function(checked) {
-      config.showParticles = checked;
-      particlesGroup.visible = checked;
-    };
-
-    window.toggleCompass = function(checked) {
-      config.showCompass = checked;
-      compassGroup.visible = checked;
-    };
-
-    window.moveProbe = function(loc) {
-      if (loc === 'north') {
-        config.probePos.set(0, config.solenoidLength * 0.5 + 0.8, 0);
-      } else if (loc === 'south') {
-        config.probePos.set(0, -config.solenoidLength * 0.5 - 0.8, 0);
-      } else {
-        config.probePos.set(2.4, 0, 0);
-      }
-      compassGroup.position.copy(config.probePos);
-    };
-
-    window.setCameraPreset = function(preset) {
-      if (preset === 'top') {
-        camera.position.set(0, 14, 0.001);
-        camera.lookAt(0, 0, 0);
-      } else if (preset === 'side') {
-        camera.position.set(12, 0, 0);
-        camera.lookAt(0, 0, 0);
-      } else if (preset === 'perspective') {
-        camera.position.set(6.5, 5.5, 9.5);
-        camera.lookAt(0, 0, 0);
-      } else {
-        camera.position.set(6.5, 5.5, 9.5);
-        controls.reset();
-      }
-    };
-
-    // View Switching (Lab, Practical, Theory, Quiz)
-    window.switchView = function(viewName) {
-      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active-view'));
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
-      if (viewName !== 'lab') {
-        const v = document.getElementById('view-' + viewName);
-        if (v) v.classList.add('active-view');
-      }
-
-      const tabIdx = { 'lab': 0, 'practical': 1, 'theory': 2, 'quiz': 3 }[viewName];
-      const tabs = document.querySelectorAll('.nav-tab');
-      if (tabs[tabIdx]) tabs[tabIdx].classList.add('active');
-    };
+    function toggleClips(show) {
+      state.showClips = show;
+      if (clipsGroup) clipsGroup.visible = show;
+    }
 
     // Quiz evaluation
-    const quizAnswers = {
-      q1: { correct: 1, explanation: 'Ørsted discovered that an electric current creates a magnetic field around the conductor, which deflected the compass needle.' },
-      q2: { correct: 2, explanation: 'Painting the coil red has no physical effect on magnetism. The 3 ways are: More Current, More Turns, and a Soft Iron Core!' },
-      q3: { correct: 0, explanation: 'Soft iron quickly magnetizes and demagnetizes when current is switched on/off, making it perfect for a controllable electromagnet.' },
-      q4: { correct: 2, explanation: 'Reversing current reverses the direction of the magnetic field, causing the North and South poles to swap places.' },
-      q5: { correct: 1, explanation: 'The dependent variable is what you measure to see the effect: in this test, the number of paperclips lifted.' }
-    };
+    function checkQuiz(qNum, optIdx, isCorrect, explanation) {
+      const fb = document.getElementById('q' + qNum + '-fb');
+      fb.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+      fb.textContent = (isCorrect ? '✓ ' : '✗ ') + explanation;
 
-    let userScores = {};
-
-    window.checkAnswer = function(qId, choiceIdx, isCorrect) {
-      const qBox = document.getElementById(qId);
-      const buttons = qBox.querySelectorAll('.quiz-option');
-      buttons.forEach(b => {
-        b.disabled = true;
-        b.classList.remove('correct', 'incorrect');
+      const card = document.getElementById('q' + qNum);
+      const buttons = card.querySelectorAll('.quiz-opt-btn');
+      buttons.forEach((btn, idx) => {
+        btn.classList.remove('correct', 'incorrect');
+        if (idx === optIdx) {
+          btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+        }
       });
+    }
 
-      const fb = document.getElementById(qId + '-fb');
-      fb.style.display = 'block';
-
-      if (isCorrect) {
-        buttons[choiceIdx].classList.add('correct');
-        fb.innerHTML = '<span style="color: #10b981; font-weight: bold;">✔ Correct!</span> ' + quizAnswers[qId].explanation;
-        userScores[qId] = 1;
-      } else {
-        buttons[choiceIdx].classList.add('incorrect');
-        buttons[quizAnswers[qId].correct].classList.add('correct');
-        fb.innerHTML = '<span style="color: #ef4444; font-weight: bold;">✘ Incorrect.</span> ' + quizAnswers[qId].explanation;
-        userScores[qId] = 0;
+    // Physics Calculations
+    function recalcPhysics() {
+      if (!state.power || state.current === 0) {
+        document.getElementById('readout-b').textContent = '0.00 mT';
+        document.getElementById('readout-clips').textContent = '0 clips';
+        document.getElementById('summary-clips').textContent = '0';
+        return;
       }
 
-      const answeredCount = Object.keys(userScores).length;
-      const totalScore = Object.values(userScores).reduce((a, b) => a + b, 0);
-      document.getElementById('quiz-score-text').innerText = 'Score: ' + totalScore + ' / 5 (' + Math.round((totalScore / 5) * 100) + '%)' + (totalScore === 5 ? ' 🌟 Outstanding!' : '');
+      let coreMultiplier = 1;
+      if (state.mode === 'electromagnet') {
+        if (state.core === 'soft-iron') coreMultiplier = 100;
+        else if (state.core === 'wood') coreMultiplier = 1;
+        else coreMultiplier = 1;
+      }
+
+      let effectiveTurns = 1;
+      if (state.mode === 'loop') effectiveTurns = 1;
+      if (state.mode === 'electromagnet') effectiveTurns = state.turns;
+
+      // Magnetic field formula B = mu * N * I / L
+      const bField = 0.05 * state.current * effectiveTurns * (coreMultiplier > 1 ? 2.5 : 0.08);
+      document.getElementById('readout-b').textContent = bField.toFixed(2) + ' mT';
+
+      // Lifting calculation
+      let clips = 0;
+      if (state.mode === 'electromagnet' && state.core === 'soft-iron') {
+        clips = Math.floor((state.current * state.turns * 0.16));
+      } else if (state.mode === 'electromagnet' && state.core !== 'soft-iron') {
+        clips = Math.floor((state.current * state.turns * 0.005));
+      } else {
+        clips = 0;
+      }
+      document.getElementById('readout-clips').textContent = clips + ' clips';
+      document.getElementById('summary-clips').textContent = clips.toString();
+    }
+
+    // -------------------------------------------------------------
+    // THREE.JS SCENE SETUP & RESILIENT ORBIT CONTROLS
+    // -------------------------------------------------------------
+    let scene, camera, renderer;
+    let mainRig, fieldLinesGroup, electronGroup, compassGroup, clipsGroup;
+    const electrons = [];
+    const paperclips = [];
+
+    // Camera control state
+    const camState = {
+      isDragging: false,
+      isPanning: false,
+      prevMouseX: 0,
+      prevMouseY: 0,
+      theta: 0.8,
+      phi: 1.1,
+      radius: 14,
+      target: new THREE.Vector3(0, 0, 0),
+      touchStartDist: 0
     };
 
-    // Animation Render Loop
-    const clock = new THREE.Clock();
+    function initThree() {
+      const container = document.getElementById('canvas-container');
+      const canvas = document.getElementById('three-canvas');
 
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x030712);
+
+      // Camera
+      const aspect = container.clientWidth / container.clientHeight;
+      camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+      updateCameraFromSpherical();
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(container.clientWidth, container.clientHeight);
+
+      // Lighting
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(10, 20, 15);
+      scene.add(dirLight);
+
+      const blueLight = new THREE.PointLight(0x38bdf8, 1.2, 30);
+      blueLight.position.set(-10, 5, -5);
+      scene.add(blueLight);
+
+      // Grid helper
+      const grid = new THREE.GridHelper(16, 16, 0x1e293b, 0x0f172a);
+      grid.position.y = -3;
+      scene.add(grid);
+
+      // Hierarchy groups
+      mainRig = new THREE.Group();
+      scene.add(mainRig);
+
+      fieldLinesGroup = new THREE.Group();
+      scene.add(fieldLinesGroup);
+
+      electronGroup = new THREE.Group();
+      scene.add(electronGroup);
+
+      compassGroup = new THREE.Group();
+      scene.add(compassGroup);
+
+      clipsGroup = new THREE.Group();
+      scene.add(clipsGroup);
+
+      // Setup custom resilient mouse & touch controls
+      setupCameraInteraction(canvas);
+
+      // Build scene objects
+      rebuild3DScene();
+      recalcPhysics();
+
+      // Window resize
+      window.addEventListener('resize', onWindowResize);
+
+      // Animation loop
+      animate();
+    }
+
+    function updateCameraFromSpherical() {
+      camState.phi = Math.max(0.1, Math.min(Math.PI - 0.1, camState.phi));
+      camState.radius = Math.max(4, Math.min(40, camState.radius));
+
+      const x = camState.target.x + camState.radius * Math.sin(camState.phi) * Math.sin(camState.theta);
+      const y = camState.target.y + camState.radius * Math.cos(camState.phi);
+      const z = camState.target.z + camState.radius * Math.sin(camState.phi) * Math.cos(camState.theta);
+
+      camera.position.set(x, y, z);
+      camera.lookAt(camState.target);
+    }
+
+    function setupCameraInteraction(canvas) {
+      // Mouse down
+      canvas.addEventListener('mousedown', (e) => {
+        camState.isDragging = (e.button === 0);
+        camState.isPanning = (e.button === 2);
+        camState.prevMouseX = e.clientX;
+        camState.prevMouseY = e.clientY;
+      });
+
+      window.addEventListener('mouseup', () => {
+        camState.isDragging = false;
+        camState.isPanning = false;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!camState.isDragging && !camState.isPanning) return;
+        const dx = e.clientX - camState.prevMouseX;
+        const dy = e.clientY - camState.prevMouseY;
+
+        if (camState.isDragging) {
+          camState.theta -= dx * 0.006;
+          camState.phi -= dy * 0.006;
+          updateCameraFromSpherical();
+        } else if (camState.isPanning) {
+          camState.target.x -= dx * 0.01;
+          camState.target.y += dy * 0.01;
+          updateCameraFromSpherical();
+        }
+
+        camState.prevMouseX = e.clientX;
+        camState.prevMouseY = e.clientY;
+      });
+
+      // Zoom
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        camState.radius += e.deltaY * 0.015;
+        updateCameraFromSpherical();
+      }, { passive: false });
+
+      // Disable context menu on canvas for smooth right-click panning
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      // Touch handling
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          camState.isDragging = true;
+          camState.prevMouseX = e.touches[0].clientX;
+          camState.prevMouseY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          camState.isDragging = false;
+          camState.touchStartDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+        }
+      });
+
+      window.addEventListener('touchend', () => {
+        camState.isDragging = false;
+      });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && camState.isDragging) {
+          const dx = e.touches[0].clientX - camState.prevMouseX;
+          const dy = e.touches[0].clientY - camState.prevMouseY;
+          camState.theta -= dx * 0.007;
+          camState.phi -= dy * 0.007;
+          camState.prevMouseX = e.touches[0].clientX;
+          camState.prevMouseY = e.touches[0].clientY;
+          updateCameraFromSpherical();
+        } else if (e.touches.length === 2) {
+          const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const diff = camState.touchStartDist - dist;
+          camState.radius += diff * 0.02;
+          camState.touchStartDist = dist;
+          updateCameraFromSpherical();
+        }
+      });
+    }
+
+    function setPreset(preset) {
+      if (preset === 'front') {
+        camState.theta = 0;
+        camState.phi = Math.PI / 2;
+        camState.radius = 14;
+      } else if (preset === 'side') {
+        camState.theta = Math.PI / 2;
+        camState.phi = Math.PI / 2;
+        camState.radius = 14;
+      } else if (preset === 'top') {
+        camState.theta = 0;
+        camState.phi = 0.15;
+        camState.radius = 15;
+      } else {
+        // Isometric default
+        camState.theta = 0.8;
+        camState.phi = 1.1;
+        camState.radius = 14;
+      }
+      camState.target.set(0, 0, 0);
+      updateCameraFromSpherical();
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('canvas-container');
+      if (!container || !renderer || !camera) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    // -------------------------------------------------------------
+    // BUILD 3D MODELS (Straight Wire, Loop, Electromagnet)
+    // -------------------------------------------------------------
+    function rebuild3DScene() {
+      // Clear previous meshes
+      while (mainRig.children.length > 0) {
+        const obj = mainRig.children[0];
+        mainRig.remove(obj);
+      }
+      while (fieldLinesGroup.children.length > 0) {
+        const obj = fieldLinesGroup.children[0];
+        fieldLinesGroup.remove(obj);
+      }
+      while (electronGroup.children.length > 0) {
+        const obj = electronGroup.children[0];
+        electronGroup.remove(obj);
+      }
+      while (compassGroup.children.length > 0) {
+        const obj = compassGroup.children[0];
+        compassGroup.remove(obj);
+      }
+      while (clipsGroup.children.length > 0) {
+        const obj = clipsGroup.children[0];
+        clipsGroup.remove(obj);
+      }
+      electrons.length = 0;
+      paperclips.length = 0;
+
+      if (state.mode === 'wire') {
+        buildStraightWire();
+      } else if (state.mode === 'loop') {
+        buildSingleLoop();
+      } else {
+        buildElectromagnet();
+      }
+
+      buildMagneticFieldLines();
+      buildCompass();
+      buildPaperclips();
+    }
+
+    function buildStraightWire() {
+      // Vertical straight copper wire
+      const wireGeo = new THREE.CylinderGeometry(0.12, 0.12, 8, 32);
+      const wireMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.8, roughness: 0.2 });
+      const wire = new THREE.Mesh(wireGeo, wireMat);
+      mainRig.add(wire);
+
+      // Cardboard demonstration plate
+      const plateGeo = new THREE.BoxGeometry(5, 0.08, 5);
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
+      const plate = new THREE.Mesh(plateGeo, plateMat);
+      plate.position.y = 0;
+      mainRig.add(plate);
+
+      // Electron particles
+      createElectronTrack([
+        new THREE.Vector3(0, -3.8, 0),
+        new THREE.Vector3(0, 3.8, 0)
+      ], 12);
+    }
+
+    function buildSingleLoop() {
+      // Torus single loop wire
+      const loopGeo = new THREE.TorusGeometry(2, 0.1, 24, 64);
+      const loopMat = new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.8, roughness: 0.2 });
+      const loop = new THREE.Mesh(loopGeo, loopMat);
+      loop.rotation.y = Math.PI / 2;
+      mainRig.add(loop);
+
+      // Base board
+      const boardGeo = new THREE.BoxGeometry(6, 0.1, 4);
+      const boardMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+      const board = new THREE.Mesh(boardGeo, boardMat);
+      board.position.y = -2;
+      mainRig.add(board);
+
+      // Electron particles along circle
+      const pts = [];
+      const numPts = 32;
+      for (let i = 0; i <= numPts; i++) {
+        const a = (i / numPts) * Math.PI * 2;
+        pts.push(new THREE.Vector3(0, Math.sin(a) * 2, Math.cos(a) * 2));
+      }
+      createElectronTrack(pts, 16);
+    }
+
+    function buildElectromagnet() {
+      // Core
+      let coreColor = 0x64748b; // soft iron default
+      let coreRoughness = 0.3;
+      let coreMetalness = 0.8;
+
+      if (state.core === 'wood') {
+        coreColor = 0xa16207;
+        coreRoughness = 0.8;
+        coreMetalness = 0.1;
+      } else if (state.core === 'air') {
+        coreColor = 0x38bdf8;
+        coreRoughness = 0.1;
+        coreMetalness = 0.2;
+      }
+
+      const coreGeo = new THREE.CylinderGeometry(0.55, 0.55, 6, 32);
+      const coreMat = new THREE.MeshStandardMaterial({
+        color: coreColor,
+        roughness: coreRoughness,
+        metalness: coreMetalness,
+        transparent: state.core === 'air',
+        opacity: state.core === 'air' ? 0.3 : 1.0
+      });
+      const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+      coreMesh.rotation.z = Math.PI / 2; // horizontal orientation along X
+      mainRig.add(coreMesh);
+
+      // Bolt head and tip if soft iron
+      if (state.core === 'soft-iron') {
+        const headGeo = new THREE.CylinderGeometry(0.9, 0.9, 0.4, 6);
+        const headMesh = new THREE.Mesh(headGeo, coreMat);
+        headMesh.rotation.z = Math.PI / 2;
+        headMesh.position.x = -3.2;
+        mainRig.add(headMesh);
+      }
+
+      // Copper Coil (Helical Curve)
+      class SolenoidCurve extends THREE.Curve {
+        constructor(turns, length, radius) {
+          super();
+          this.turns = turns;
+          this.length = length;
+          this.radius = radius;
+        }
+        getPoint(t) {
+          const x = (t - 0.5) * this.length;
+          const angle = t * Math.PI * 2 * this.turns;
+          const y = Math.sin(angle) * this.radius;
+          const z = Math.cos(angle) * this.radius;
+          return new THREE.Vector3(x, y, z);
+        }
+      }
+
+      const visualTurns = Math.min(state.turns, 45); // keep geometry smooth
+      const curve = new SolenoidCurve(visualTurns, 4.8, 0.68);
+      const tubeGeo = new THREE.TubeGeometry(curve, visualTurns * 12, 0.065, 8, false);
+      const copperMat = new THREE.MeshStandardMaterial({
+        color: 0xd97706,
+        metalness: 0.85,
+        roughness: 0.2
+      });
+      const coilMesh = new THREE.Mesh(tubeGeo, copperMat);
+      mainRig.add(coilMesh);
+
+      // Lead wires extending downwards
+      const leadGeo = new THREE.CylinderGeometry(0.05, 0.05, 2.5, 16);
+      const lead1 = new THREE.Mesh(leadGeo, copperMat);
+      lead1.position.set(-2.4, -1.8, 0.6);
+      mainRig.add(lead1);
+
+      const lead2 = new THREE.Mesh(leadGeo, copperMat);
+      lead2.position.set(2.4, -1.8, 0.6);
+      mainRig.add(lead2);
+
+      // Wooden base block underneath
+      const baseGeo = new THREE.BoxGeometry(7, 0.3, 3);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseMesh.position.y = -3.1;
+      mainRig.add(baseMesh);
+
+      // Electron track points along helical curve
+      const electronPts = [];
+      const numPts = 120;
+      for (let i = 0; i <= numPts; i++) {
+        electronPts.push(curve.getPoint(i / numPts));
+      }
+      createElectronTrack(electronPts, 24);
+    }
+
+    function createElectronTrack(points, count) {
+      const sphereGeo = new THREE.SphereGeometry(0.08, 12, 12);
+      const sphereMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+      for (let i = 0; i < count; i++) {
+        const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+        mesh.visible = state.showElectrons;
+        electronGroup.add(mesh);
+        electrons.push({
+          mesh: mesh,
+          points: points,
+          t: i / count
+        });
+      }
+    }
+
+    function buildMagneticFieldLines() {
+      const lineMat = new THREE.LineBasicMaterial({
+        color: 0x06b6d4,
+        transparent: true,
+        opacity: 0.55
+      });
+
+      if (state.mode === 'wire') {
+        // Concentric circles around straight wire
+        const radii = [0.6, 1.2, 1.8, 2.4];
+        radii.forEach(r => {
+          const curve = new THREE.EllipseCurve(0, 0, r, r, 0, 2 * Math.PI, false, 0);
+          const pts = curve.getPoints(50);
+          const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, 0, p.y)));
+          const line = new THREE.Line(geo, lineMat);
+          fieldLinesGroup.add(line);
+
+          // Add a second layer at y=1.2 and y=-1.2
+          const line2 = line.clone();
+          line2.position.y = 1.2;
+          fieldLinesGroup.add(line2);
+
+          const line3 = line.clone();
+          line3.position.y = -1.2;
+          fieldLinesGroup.add(line3);
+        });
+      } else {
+        // Toroidal & Dipolar magnetic loops (like a bar magnet / solenoid)
+        const loops = [
+          { rx: 2.8, ry: 1.2, z: 0 },
+          { rx: 3.5, ry: 2.0, z: 0 },
+          { rx: 4.2, ry: 2.8, z: 0 },
+          { rx: 3.2, ry: 1.6, z: 1.2 },
+          { rx: 3.2, ry: 1.6, z: -1.2 }
+        ];
+
+        loops.forEach(l => {
+          const curve = new THREE.EllipseCurve(0, 0, l.rx, l.ry, 0, 2 * Math.PI, false, 0);
+          const pts = curve.getPoints(64);
+          const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, p.y, l.z)));
+          const line = new THREE.Line(geo, lineMat);
+          fieldLinesGroup.add(line);
+        });
+      }
+
+      fieldLinesGroup.visible = state.showFieldLines;
+    }
+
+    function buildCompass() {
+      // Compass housing
+      const bodyGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.15, 24);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 });
+      const compassMesh = new THREE.Mesh(bodyGeo, bodyMat);
+
+      // Compass needle: North (Red) and South (Silver/Blue)
+      const needleNorthGeo = new THREE.ConeGeometry(0.12, 0.55, 12);
+      const needleNorthMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+      const needleNorth = new THREE.Mesh(needleNorthGeo, needleNorthMat);
+      needleNorth.rotation.x = Math.PI / 2;
+      needleNorth.position.z = 0.28;
+
+      const needleSouthGeo = new THREE.ConeGeometry(0.12, 0.55, 12);
+      const needleSouthMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+      const needleSouth = new THREE.Mesh(needleSouthGeo, needleSouthMat);
+      needleSouth.rotation.x = -Math.PI / 2;
+      needleSouth.position.z = -0.28;
+
+      const needleGroup = new THREE.Group();
+      needleGroup.add(needleNorth);
+      needleGroup.add(needleSouth);
+      needleGroup.position.y = 0.1;
+      compassMesh.add(needleGroup);
+
+      // Position compass to the side
+      if (state.mode === 'wire') {
+        compassMesh.position.set(1.6, 0.1, 0);
+      } else {
+        compassMesh.position.set(3.8, 0, 0);
+      }
+
+      compassGroup.add(compassMesh);
+      compassGroup.visible = state.showCompass;
+    }
+
+    function buildPaperclips() {
+      // Create paperclips at the tip of the electromagnet
+      const clipGeo = new THREE.TorusGeometry(0.25, 0.04, 8, 24);
+      const clipMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, metalness: 0.9, roughness: 0.2 });
+
+      for (let i = 0; i < 15; i++) {
+        const clip = new THREE.Mesh(clipGeo, clipMat);
+        const hangX = 3.1 + Math.random() * 0.4;
+        const hangY = -0.4 - Math.random() * 0.8;
+        const hangZ = (Math.random() - 0.5) * 0.6;
+        clip.position.set(hangX, hangY, hangZ);
+        clip.rotation.set(Math.random() * 2, Math.random() * 2, Math.random() * 2);
+
+        clipsGroup.add(clip);
+        paperclips.push({ mesh: clip, baseX: hangX, baseY: hangY, baseZ: hangZ });
+      }
+
+      clipsGroup.visible = state.showClips;
+    }
+
+    // -------------------------------------------------------------
+    // ANIMATION & RENDER LOOP
+    // -------------------------------------------------------------
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      controls.update();
-      updateCompassProbe();
-      updateParticles(delta);
+
+      // Animate flowing electrons if circuit is active
+      if (state.power && state.current > 0 && electrons.length > 0) {
+        const speed = (state.current / 10) * 0.008 * (state.reversed ? -1 : 1);
+        electrons.forEach(el => {
+          el.t += speed;
+          if (el.t > 1) el.t -= 1;
+          if (el.t < 0) el.t += 1;
+
+          const idx = Math.floor(el.t * (el.points.length - 1));
+          if (el.points[idx]) {
+            el.mesh.position.copy(el.points[idx]);
+          }
+        });
+      }
+
+      // Animate paperclips falling if power is switched off
+      if (paperclips.length > 0) {
+        const isLifting = state.power && state.current > 0 && state.mode === 'electromagnet' && state.core === 'soft-iron';
+        paperclips.forEach((p, idx) => {
+          if (isLifting) {
+            // Stay attached to core tip
+            p.mesh.position.y += (p.baseY - p.mesh.position.y) * 0.1;
+          } else {
+            // Drop onto desk
+            p.mesh.position.y += (-2.9 - p.mesh.position.y) * 0.15;
+          }
+        });
+      }
+
       renderer.render(scene, camera);
     }
 
-    // Resize handler
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / (window.innerHeight - 52);
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight - 52);
+    // Initialize on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      initThree();
     });
-
-    // Initial setup
-    rebuildCircuit();
-    rebuildConductor();
-    rebuildFieldLines();
-    initParticles();
-    animate();
   </script>
 </body>
 </html>

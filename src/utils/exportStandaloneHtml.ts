@@ -197,8 +197,9 @@ export function generateStandaloneHtml(currentConfig?: SimulationConfig): string
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Three.js CDN and OrbitControls CDN with fallback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
@@ -716,11 +717,44 @@ export function generateStandaloneHtml(currentConfig?: SimulationConfig): string
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxDistance = 30;
-    controls.minDistance = 2;
+    let controls;
+    if (typeof THREE.OrbitControls === 'function') {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxDistance = 30;
+      controls.minDistance = 2;
+    } else {
+      // Resilient fallback drag-to-rotate camera controller
+      controls = { update: function() {} };
+      let isDragging = false, prevX = 0, prevY = 0;
+      let theta = 0.9, phi = 1.0, radius = 13.0;
+      function updateSpherical() {
+        phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
+        radius = Math.max(2, Math.min(30, radius));
+        camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+        camera.position.y = radius * Math.cos(phi);
+        camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
+        camera.lookAt(0, 0, 0);
+      }
+      renderer.domElement.addEventListener('mousedown', (e) => {
+        isDragging = true; prevX = e.clientX; prevY = e.clientY;
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        theta -= (e.clientX - prevX) * 0.007;
+        phi -= (e.clientY - prevY) * 0.007;
+        prevX = e.clientX; prevY = e.clientY;
+        updateSpherical();
+      });
+      renderer.domElement.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        radius += e.deltaY * 0.015;
+        updateSpherical();
+      }, { passive: false });
+      updateSpherical();
+    }
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
