@@ -151,7 +151,7 @@ export default function App() {
 
   const handleDownloadStandalone = async () => {
     try {
-      const response = await fetch('/lesson-3-electromagnet.html');
+      const response = await fetch(`${import.meta.env.BASE_URL}lesson-3-electromagnet.html`);
       if (response.ok) {
         const text = await response.text();
         const blob = new Blob([text], { type: 'text/html' });
@@ -182,7 +182,7 @@ export default function App() {
 
   const handleDownloadMotorStandalone = async () => {
     try {
-      const response = await fetch('/lesson-4-electric-motor.html');
+      const response = await fetch(`${import.meta.env.BASE_URL}lesson-4-electric-motor.html`);
       if (response.ok) {
         const text = await response.text();
         const blob = new Blob([text], { type: 'text/html' });
