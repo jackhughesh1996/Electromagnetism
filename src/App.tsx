@@ -211,6 +211,8 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const isStandalone = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('lesson');
+
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 flex flex-col">
       {/* Master Top Navigation Bar */}
@@ -226,7 +228,7 @@ export default function App() {
                 {activeLesson === 'L4' ? '3D Electric Motor Explorer' : 'Electromagnet Virtual Lab'}
               </h1>
               <span className="text-[10px] font-semibold text-sky-400 bg-sky-950/80 border border-sky-800 px-1.5 py-0.5 rounded-md hidden md:inline">
-                Year 8 KS3
+                {isStandalone ? (activeLesson === 'L4' ? 'Lesson 4 • Year 8 KS3' : 'Lesson 3 • Year 8 KS3') : 'Year 8 KS3'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
@@ -237,33 +239,35 @@ export default function App() {
           </div>
         </div>
 
-        {/* Master Lesson Switcher Pill */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner">
-          <button
-            type="button"
-            onClick={() => setActiveLesson('L4')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition ${
-              activeLesson === 'L4'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <RotateCw className="w-3.5 h-3.5" />
-            <span>L4: Electric Motor</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveLesson('L3')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition ${
-              activeLesson === 'L3'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            <span>L3: Electromagnet</span>
-          </button>
-        </div>
+        {/* Master Lesson Switcher Pill (Hidden if viewing standalone lesson page) */}
+        {!isStandalone && (
+          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setActiveLesson('L4')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition ${
+                activeLesson === 'L4'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              <span>L4: Electric Motor</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveLesson('L3')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition ${
+                activeLesson === 'L3'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>L3: Electromagnet</span>
+            </button>
+          </div>
+        )}
 
         {/* Right Action Tools */}
         <div className="flex items-center gap-2">
@@ -279,7 +283,7 @@ export default function App() {
           {activeLesson === 'L4' ? (
             <>
               <a
-                href="/lesson-4-electric-motor.html"
+                href="./lesson-4-electric-motor.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
@@ -300,7 +304,7 @@ export default function App() {
           ) : (
             <>
               <a
-                href="/lesson-3-electromagnet.html"
+                href="./lesson-3-electromagnet.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"

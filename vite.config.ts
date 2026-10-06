@@ -5,19 +5,11 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-      },
-    },
-    build: {
-      rollupOptions: {
-        input: {
-          main: path.resolve(__dirname, 'index.html'),
-          lesson3: path.resolve(__dirname, 'lesson-3-electromagnet.html'),
-          lesson4: path.resolve(__dirname, 'lesson-4-electric-motor.html'),
-        },
       },
     },
     server: {
