@@ -43,7 +43,36 @@ export interface FieldMeasurement {
   direction?: Vector3D;
 }
 
-export type ActiveLesson = 'L3' | 'L4';
+export type ActiveLesson = 'L3' | 'L4' | 'L5';
+
+export interface InductionConfig {
+  magnetStrength: 'standard' | 'strong'; // 1.0 vs 2.0
+  magnetFlipped: boolean; // false = N on right, true = S on right
+  coilTurns: 25 | 50 | 100;
+  motionSpeed: 'slow' | 'medium' | 'fast'; // speed for auto movements
+  showFieldLines: boolean;
+  showFieldDisc: boolean;
+  showCurrentIndicator: boolean;
+  showGraph: boolean;
+  showMeter: boolean;
+  autoMode: 'none' | 'in_out' | 'move_both';
+}
+
+export interface InductionState {
+  magnetPosition: number; // axial position along X (-6 to +6)
+  coilPosition: number; // axial position along X (-4 to +4, default 0)
+  relativePosition: number; // magnetPosition - coilPosition
+  magnetVelocity: number;
+  coilVelocity: number;
+  relativeVelocity: number; // magnetVelocity - coilVelocity
+  fieldThroughCoil: number; // Proxy for field passing through the coil (-100 to +100)
+  rateOfChange: number; // dField/dt
+  inducedCurrent: number; // Normalized -100 to +100 (relative induced effect)
+  meterDeflection: number; // Normalized -1 to +1
+  fieldStrengthDescriptor: 'Low' | 'Medium' | 'High';
+  fieldChangeDescriptor: 'None' | 'Slow' | 'Fast';
+  currentDirectionDescriptor: '←' | '0' | '→';
+}
 
 export interface MotorConfig {
   mode: 'motor' | 'single_wire';

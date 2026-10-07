@@ -11,6 +11,7 @@ import { Challenge3Core } from './components/challenges/Challenge3Core';
 import { Challenge4Strength } from './components/challenges/Challenge4Strength';
 import { Challenge5FairTest } from './components/challenges/Challenge5FairTest';
 import { MotorExplorer } from './components/motor/MotorExplorer';
+import { InductionExplorer } from './components/induction/InductionExplorer';
 import {
   BookOpen,
   Download,
@@ -73,6 +74,7 @@ export default function App() {
       const lessonParam = params.get('lesson');
       if (lessonParam === 'L3' || lessonParam === 'l3') return 'L3';
       if (lessonParam === 'L4' || lessonParam === 'l4') return 'L4';
+      if (lessonParam === 'L5' || lessonParam === 'l5') return 'L5';
     }
     return 'L4';
   });
@@ -220,19 +222,29 @@ export default function App() {
         {/* Brand & Sequence Switcher */}
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
-            {activeLesson === 'L4' ? '🔄' : '🧲'}
+            {activeLesson === 'L5' ? '⚡' : activeLesson === 'L4' ? '🔄' : '🧲'}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xs sm:text-sm font-bold text-white leading-none">
-                {activeLesson === 'L4' ? '3D Electric Motor Explorer' : 'Electromagnet Virtual Lab'}
+                {activeLesson === 'L5'
+                  ? '3D Electromagnetic Induction Lab'
+                  : activeLesson === 'L4'
+                  ? '3D Electric Motor Explorer'
+                  : 'Electromagnet Virtual Lab'}
               </h1>
               <span className="text-[10px] font-semibold text-sky-400 bg-sky-950/80 border border-sky-800 px-1.5 py-0.5 rounded-md hidden md:inline">
-                {isStandalone ? (activeLesson === 'L4' ? 'Lesson 4 • Year 8 KS3' : 'Lesson 3 • Year 8 KS3') : 'Year 8 KS3'}
+                {activeLesson === 'L5'
+                  ? 'Lesson 5 • Year 8 Science'
+                  : isStandalone
+                  ? (activeLesson === 'L4' ? 'Lesson 4 • Year 8 KS3' : 'Lesson 3 • Year 8 KS3')
+                  : 'Year 8 KS3'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
-              {activeLesson === 'L4'
+              {activeLesson === 'L5'
+                ? 'Lesson 5: How changing magnetic fields produce electric current'
+                : activeLesson === 'L4'
                 ? 'Lesson 4: How interacting magnetic fields create rotation'
                 : 'Lesson 3: How electric current creates magnetic fields'}
             </p>
@@ -242,6 +254,18 @@ export default function App() {
         {/* Master Lesson Switcher Pill (Hidden if viewing standalone lesson page) */}
         {!isStandalone && (
           <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setActiveLesson('L3')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition ${
+                activeLesson === 'L3'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>L3: Electromagnet</span>
+            </button>
             <button
               type="button"
               onClick={() => setActiveLesson('L4')}
@@ -256,41 +280,45 @@ export default function App() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveLesson('L3')}
+              onClick={() => setActiveLesson('L5')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition ${
-                activeLesson === 'L3'
+                activeLesson === 'L5'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>L3: Electromagnet</span>
+              <span>L5: Induction</span>
             </button>
           </div>
         )}
 
         {/* Right Action Tools */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsTheoryOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Theory Guide</span>
-          </button>
+          {activeLesson !== 'L5' && (
+            <button
+              type="button"
+              onClick={() => setIsTheoryOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Theory Guide</span>
+            </button>
+          )}
 
-          {activeLesson === 'L4' ? (
+          {activeLesson === 'L4' && (
             <>
-              <a
-                href="./lesson-4-electric-motor.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
-                title="Open Lesson 4 Motor Standalone HTML in new window"
-              >
-                <span>Open L4 HTML</span>
-              </a>
+              {!isStandalone && (
+                <a
+                  href={`${import.meta.env.BASE_URL}lesson-4-electric-motor.html`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
+                  title="Open Lesson 4 Motor Standalone HTML in new window"
+                >
+                  <span>Open L4 HTML</span>
+                </a>
+              )}
               <button
                 type="button"
                 onClick={handleDownloadMotorStandalone}
@@ -301,17 +329,21 @@ export default function App() {
                 <span className="hidden sm:inline">Download L4 HTML</span>
               </button>
             </>
-          ) : (
+          )}
+
+          {activeLesson === 'L3' && (
             <>
-              <a
-                href="./lesson-3-electromagnet.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
-                title="Open Lesson 3 Electromagnet Standalone HTML in new window"
-              >
-                <span>Open L3 HTML</span>
-              </a>
+              {!isStandalone && (
+                <a
+                  href={`${import.meta.env.BASE_URL}lesson-3-electromagnet.html`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-xl transition border border-sky-900/60"
+                  title="Open Lesson 3 Electromagnet Standalone HTML in new window"
+                >
+                  <span>Open L3 HTML</span>
+                </a>
+              )}
               <button
                 type="button"
                 onClick={handleDownloadStandalone}
@@ -326,10 +358,10 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main View: Lesson 4 vs Lesson 3 */}
-      {activeLesson === 'L4' ? (
-        <MotorExplorer />
-      ) : (
+      {/* Main View: Lesson 4 vs Lesson 5 vs Lesson 3 */}
+      {activeLesson === 'L4' && <MotorExplorer />}
+      {activeLesson === 'L5' && <InductionExplorer />}
+      {activeLesson === 'L3' && (
         /* Lesson 3 Electromagnet Simulation */
         <div className="flex-1 flex flex-col min-h-0">
           {/* Sub-header for L3 Mode Toggle */}
@@ -552,7 +584,7 @@ export default function App() {
       />
 
       {/* KS3 Science Theory & Revision Guide Modal */}
-      <TheoryModal isOpen={isTheoryOpen} onClose={() => setIsTheoryOpen(false)} />
+      <TheoryModal isOpen={isTheoryOpen && activeLesson !== 'L5'} onClose={() => setIsTheoryOpen(false)} />
     </main>
   );
 }
